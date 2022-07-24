@@ -1,0 +1,102 @@
+import sys, os
+
+# import massif parser from its repo
+# should install msparser instead at somepoint
+sys.path.append('msparser/')
+import msparser
+
+# benchmarking params
+n_rounds = 3
+gridsizes = [40, 100, 160, 240]
+# something for number of chemistry sites
+
+
+# prints script usage
+def print_usage(opt):
+    if opt:
+        print(f'Error: unknown option \'{opt}\'')
+    usage = \
+    'Usage: python3 Benchmark.py [option] [cmd]\n'+ \
+    '   options:\n'+ \
+    '       time - benchmark runtime\n'+ \
+    '       mem  - profile memory usage\n'+ \
+    '       cpu  - profile cpu usage\n'+ \
+    '       all  - benchmark all options\n'+ \
+    '       help - display usage'
+    print(usage)
+
+def time_cmd(cmd):
+    print(f'timing \'{cmd}\'')
+    export_time_data()
+def export_time_data():
+    print('exporting time data')
+
+def profile_memory(cmd):
+    print(f'\nProfiling memory usage of \'{cmd}\'.\n')
+
+    # independent var: system hardware
+    for round in range(n_rounds):
+        profile_cmd = \
+            'valgrind '+ \
+            '--tool=massif '+ \
+            '--time-unit=ms'+ \
+            f'--massif-out-file=data/mem/sys-{round} '+ \
+            f'{cmd}'
+        os.system(profile_cmd)
+        print(f'[Round {round}]: profiled memory usage of \'{cmd}\'.\n')
+
+    # independent var: gridsize
+    for gridsize in gridsizes:
+        for round in range(n_rounds):
+            profile_cmd = \
+                'valgrind '+ \
+                '--tool=massif '+ \
+                '--time-unit=ms'+ \
+                f'--massif-out-file=data/mem/gridsize-{gridsize}-{round} '+ \
+                f'{cmd} {gridsize}'
+            os.system(profile_cmd)
+            print(f'[Round {round}]: profiled memory usage of \'{cmd}\'.\n')
+    
+    # independent var: chemistry sites
+    
+    export_memory_data()
+def export_memory_data():
+    print('exporting memory data')
+
+def profile_cpu(cmd):
+    print(f'profiling cpu usage of \'{cmd}\'')
+    export_cpu_data()
+def export_cpu_data():
+    print('exporting cpu data')
+
+
+def main(argv):
+    # cmd line args error handling
+    try:
+        option = argv[1]
+        assert option == 'help' or len(argv) > 2
+    except:
+        print_usage(None)
+        sys.exit(1)
+
+    cmd = ' '.join(argv[2:])    # the string representing the command to benchmark
+
+    # option handling
+    if option == 'time':
+        time_cmd(cmd)
+    elif option == 'mem':
+        profile_memory(cmd)
+    elif option == 'cpu':
+        profile_cpu(cmd)
+    elif option == 'all':
+        time_cmd(cmd)
+        profile_memory(cmd)
+        profile_cpu(cmd)
+    elif option == 'help':
+        print_usage(None)
+    else:
+        print_usage(option)
+
+# entry point
+if __name__ == '__main__':
+    main(sys.argv)
