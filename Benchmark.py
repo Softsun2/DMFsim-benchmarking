@@ -1,6 +1,8 @@
 import sys, os
 
 # import massif parser from its repo
+# to obtain the repo run (if not using ssh key):
+# git clone https://github.com/MathieuTurcotte/msparser.git
 # should install msparser instead at somepoint
 sys.path.append('msparser/')
 import msparser
@@ -11,7 +13,7 @@ gridsizes = [40, 100, 160, 240]
 # something for number of chemistry sites
 
 
-# prints script usage
+# ================ USAGE ================ 
 def print_usage(opt):
     if opt:
         print(f'Error: unknown option \'{opt}\'')
@@ -25,12 +27,16 @@ def print_usage(opt):
     '       help - display usage'
     print(usage)
 
+# ================ TIMING ================ 
 def time_cmd(cmd):
     print(f'timing \'{cmd}\'')
     export_time_data()
+
 def export_time_data():
     print('exporting time data')
 
+
+# ================ MEMORY ================ 
 def profile_memory(cmd):
     print(f'\nProfiling memory usage of \'{cmd}\'.\n')
 
@@ -60,16 +66,21 @@ def profile_memory(cmd):
     # independent var: chemistry sites
     
     export_memory_data()
+
 def export_memory_data():
     print('exporting memory data')
 
+
+# ================ CPU ================ 
 def profile_cpu(cmd):
     print(f'profiling cpu usage of \'{cmd}\'')
     export_cpu_data()
+
 def export_cpu_data():
     print('exporting cpu data')
 
 
+# ================ MAIN ================ 
 def main(argv):
     # cmd line args error handling
     try:
@@ -97,6 +108,6 @@ def main(argv):
     else:
         print_usage(option)
 
-# entry point
-if __name__ == '__main__':
+
+if __name__ == '__main__':      # entry point
     main(sys.argv)
