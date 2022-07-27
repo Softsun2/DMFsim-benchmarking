@@ -43,6 +43,9 @@ Any timer really, perf's timer seems accurate.
 #### Perf
 Uses performance counters to monitor hardware events such as instructions executed. `perf stat python3 Tutorial.py` produces event counts. Not sure what metric we'd use from this? Isn't clock cycles just another way of saying the runtime? Maybe the number of instructions executed would be better? Will need to look into this.
 
+### Top
+https://stackoverflow.com/questions/1221555/retrieve-cpu-usage-and-memory-usage-of-a-single-process-on-linux
+
 
 # Presentation
 

@@ -1,15 +1,14 @@
 import sys, os
 
 # import massif parser from its repo
-# to obtain the repo run (if not using ssh key):
-# git clone https://github.com/MathieuTurcotte/msparser.git
-# should install msparser instead at somepoint
+# clone this repo: https://github.com/MathieuTurcotte/msparser
+# should install msparser rather than cloning at somepoint
 sys.path.append('msparser/')
 import msparser
 
 # benchmarking params
 n_rounds = 3
-gridsizes = [40, 100, 160, 240]
+gridsizes = [40, 240]
 # something for number of chemistry sites
 
 
@@ -39,27 +38,33 @@ def export_time_data():
 # ================ MEMORY ================ 
 def profile_memory(cmd):
     print(f'\nProfiling memory usage of \'{cmd}\'.\n')
+    profile_cmd_pref = (
+        'valgrind '
+        '--tool=massif '            # heap profiler tool
+        '--time-unit=ms '           # profiling time unit in milliseconds
+        '--pages-as-heap=yes '
+        '--detailed-freq=1000000 '     # disable detailed snapshots
+        '--depth=1 '                # max depth of allocation trees for deatiled snapshots
+    )
 
     # independent var: system hardware
     for round in range(n_rounds):
-        profile_cmd = \
-            'valgrind '+ \
-            '--tool=massif '+ \
-            '--time-unit=ms'+ \
-            f'--massif-out-file=data/mem/sys-{round} '+ \
+        profile_cmd = (
+            profile_cmd_pref +
+            f'--massif-out-file=data/mem/sys-{round} '
             f'{cmd}'
+        )
         os.system(profile_cmd)
         print(f'[Round {round}]: profiled memory usage of \'{cmd}\'.\n')
 
     # independent var: gridsize
     for gridsize in gridsizes:
         for round in range(n_rounds):
-            profile_cmd = \
-                'valgrind '+ \
-                '--tool=massif '+ \
-                '--time-unit=ms'+ \
-                f'--massif-out-file=data/mem/gridsize-{gridsize}-{round} '+ \
+            profile_cmd = (
+                profile_cmd_pref +
+                f'--massif-out-file=data/mem/gridsize-{gridsize}-{round} '
                 f'{cmd} {gridsize}'
+            )
             os.system(profile_cmd)
             print(f'[Round {round}]: profiled memory usage of \'{cmd}\'.\n')
     
