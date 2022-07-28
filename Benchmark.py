@@ -29,10 +29,32 @@ def print_usage(opt):
 # ================ TIMING ================ 
 def time_cmd(cmd):
     print(f'timing \'{cmd}\'')
+
+    # TODO: independent var: system hardware
+    # produce n_rounds many runtimes at the default gridsize
+
+    # TODO: independent var: gridsize
+    # produce n_rounds many runtimes for each gridsize in gridsizes
+
+    # NOTE: rutimes are simple, we could maybe parse cmd print
+    # statements and send the results to export_time_data as a variable
+
     export_time_data()
 
 def export_time_data():
     print('exporting time data')
+
+    # TODO: compile data into a csv for system hardware
+    # should just be one row of all the runtimes
+    # NOTE: need to track who's machine was used to obtain this data
+    # maybe do so in filename or something with whoami cmd.
+    
+    # TODO: compile data into a csv for gridsizes
+    # format as follows
+    #   gridsize0   gridsize1    ... gridsizeN
+    #   r0_gs0_time r0_gs1_time      r0_gsN_time
+    #   ...
+    #   rN_gs0_time rN_gs1_time      rN_gsN_time
 
 
 # ================ MEMORY ================ 
@@ -43,7 +65,7 @@ def profile_memory(cmd):
         '--tool=massif '            # heap profiler tool
         '--time-unit=ms '           # profiling time unit in milliseconds
         '--pages-as-heap=yes '
-        '--detailed-freq=1000000 '     # disable detailed snapshots
+        '--detailed-freq=1000000 '  # disable detailed snapshots
         '--depth=1 '                # max depth of allocation trees for deatiled snapshots
     )
 
@@ -79,10 +101,27 @@ def export_memory_data():
 # ================ CPU ================ 
 def profile_cpu(cmd):
     print(f'profiling cpu usage of \'{cmd}\'')
+    
+    # TODO: independent var: system hardware
+    # produce n_rounds many runtimes at the default gridsize
+
+    # TODO: independent var: gridsize
+    # produce n_rounds many runtimes for each gridsize in gridsizes
+
+    # NOTE: we could maybe parse cmd print statements
+    # and send the results to export_cpu_data as a variable
+
     export_cpu_data()
 
 def export_cpu_data():
     print('exporting cpu data')
+    
+    # TODO: compile data into a csv for cpu usage
+    # format as follows
+    #   gridsize0     gridsize1    ...  gridsizeN
+    #   r0_gs0_usage  r0_gs1_usage ...  r0_gsN_usage
+    #   ...
+    #   rN_gs0_usage  rN_gs1_usage ...  rN_gsN_usage
 
 
 # ================ MAIN ================ 
