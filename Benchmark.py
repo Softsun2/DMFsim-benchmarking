@@ -103,10 +103,10 @@ def profile_cpu(cmd):
     print(f'profiling cpu usage of \'{cmd}\'')
     
     # TODO: independent var: system hardware
-    # produce n_rounds many runtimes at the default gridsize
+    # produce n_rounds many cpu usage metrics at the default gridsize
 
     # TODO: independent var: gridsize
-    # produce n_rounds many runtimes for each gridsize in gridsizes
+    # produce n_rounds many cpu usage metrics for each gridsize in gridsizes
 
     # NOTE: we could maybe parse cmd print statements
     # and send the results to export_cpu_data as a variable
