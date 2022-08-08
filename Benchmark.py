@@ -1,14 +1,10 @@
-import sys, os
+from pickle import NONE
+import sys, os, time
 
-# import massif parser from its repo
-# clone this repo: https://github.com/MathieuTurcotte/msparser
-# should install msparser rather than cloning at somepoint
-sys.path.append('msparser/')
-import msparser
 
 # benchmarking params
-n_rounds = 3
-gridsizes = [40, 240]
+g_rounds = 3
+g_grid_sizes = [40, 240]
 # something for number of chemistry sites
 
 
@@ -25,6 +21,7 @@ def print_usage(opt):
     '       all  - benchmark all options\n'+ \
     '       help - display usage'
     print(usage)
+
 
 # ================ TIMING ================ 
 def time_cmd(cmd):
@@ -55,43 +52,65 @@ def export_time_data():
     #   r0_gs0_time r0_gs1_time      r0_gsN_time
     #   ...
     #   rN_gs0_time rN_gs1_time      rN_gsN_time
+    pass
+
+
+# ================ PINGING ================ 
+def get_pings(process_name, target_metric):
+    simulation_states = ['waiting', 'running', 'done']
+    sim_state = simulation_states[0]
+
+    pings = []
+
+    while sim_state == 'waiting' or sim_state == 'running':
+
+        if sim_state == 'waiting':
+            # check if the simulation process started running
+            if os.system(f'pidof {process_name} > /dev/null') == 0:
+                # set sim_state to running
+                sim_state = simulation_states[1]
+
+        elif sim_state == 'running':
+            # ping top
+            print('[CHILD]: Pinged top!')
+            # ping_top(process_name, target_metric) 
+            # check if the simulation process stopped running
+            if os.system(f'pidof {process_name} > /dev/null') != 0:
+                sim_state = simulation_states[2]
+        
+        time.sleep(1)     # don't spam pings
+    
+    return pings
+
+def ping_top(process_name, target_metric):
+    pass
+
+def write_pings(pings):
+    pass
 
 
 # ================ MEMORY ================ 
-def profile_memory(cmd):
+def profile_memory(cmd, process_name):
     print(f'\nProfiling memory usage of \'{cmd}\'.\n')
-    profile_cmd_pref = (
-        'valgrind '
-        '--tool=massif '            # heap profiler tool
-        '--time-unit=ms '           # profiling time unit in milliseconds
-        '--pages-as-heap=yes '
-        '--detailed-freq=1000000 '  # disable detailed snapshots
-        '--depth=1 '                # max depth of allocation trees for deatiled snapshots
-    )
-
     # independent var: system hardware
-    for round in range(n_rounds):
-        profile_cmd = (
-            profile_cmd_pref +
-            f'--massif-out-file=data/mem/sys-{round} '
-            f'{cmd}'
-        )
-        os.system(profile_cmd)
-        print(f'[Round {round}]: profiled memory usage of \'{cmd}\'.\n')
+    for i in range(g_rounds):
+        print('[PARENT]: Forking.')
+        pid = os.fork()             # fork process
 
+        if pid == 0:                # if child process
+            print('[CHILD]: Preparing to ping.')
+            pings = get_pings(process_name, NONE)     # ping active simulation
+            print('[CHILD]: Pinging done.')
+            write_pings(pings)      # write simulation data
+
+        else:                       # else; parent process
+            print('[PARENT]: Running Simulation.')
+            os.system(f'sh -c \'exec -a {process_name} {cmd}\'')     # run simulation
+            print('[PARENT]: Simulation done.')
+            os.wait()               # wait for child process to complete
+            
     # independent var: gridsize
-    for gridsize in gridsizes:
-        for round in range(n_rounds):
-            profile_cmd = (
-                profile_cmd_pref +
-                f'--massif-out-file=data/mem/gridsize-{gridsize}-{round} '
-                f'{cmd} {gridsize}'
-            )
-            os.system(profile_cmd)
-            print(f'[Round {round}]: profiled memory usage of \'{cmd}\'.\n')
-    
     # independent var: chemistry sites
-    
     export_memory_data()
 
 def export_memory_data():
@@ -122,6 +141,7 @@ def export_cpu_data():
     #   r0_gs0_usage  r0_gs1_usage ...  r0_gsN_usage
     #   ...
     #   rN_gs0_usage  rN_gs1_usage ...  rN_gsN_usage
+    pass
 
 
 # ================ MAIN ================ 
@@ -135,17 +155,18 @@ def main(argv):
         sys.exit(1)
 
     cmd = ' '.join(argv[2:])    # the string representing the command to benchmark
+    process_name = 'dmf-sim'
 
     # option handling
     if option == 'time':
         time_cmd(cmd)
     elif option == 'mem':
-        profile_memory(cmd)
+        profile_memory(cmd, process_name)
     elif option == 'cpu':
         profile_cpu(cmd)
     elif option == 'all':
         time_cmd(cmd)
-        profile_memory(cmd)
+        profile_memory(cmd, process_name)
         profile_cpu(cmd)
     elif option == 'help':
         print_usage(None)
