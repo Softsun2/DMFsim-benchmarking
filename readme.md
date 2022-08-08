@@ -28,7 +28,7 @@ As mentioned in the plan, the script should obtain data with the chosen benchmar
 
 ### Assumptions
 * The executable/cmd to run the simulation can take gridsize as a command line argument (defaults to 40 if none supplied).
-* The user's python memory allocation is configured to the default value; unsetting the environment var `PYTHONMALLOC` when exiting the benchmarking script is OK. This could be handled but it'd be overkill.
+* The user's top is configured as mine. I've include my `toprc` to be copied. Make a backup of your own toprc (if you want) and use the one provided. The user toprc is located at `~/.config/procps/toprc`.
 
 ### Forking
 It should be clear that the script uses multiprocessing. Top records process's hardware usage *as those processes run* which means we have to incorporate multiprocessing or threading. Shared data isn't necessary so we use child processes to interact with top as the parent process runs the simulation. The control flow is illustrated below. A ping is a data point of the form (current_cpu_runtime, target_metric). You can see that the simulation ended before the last ping was able to complete, hence it was discarded.

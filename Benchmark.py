@@ -7,7 +7,7 @@ import pandas           # csv exporting
 
 # benchmarking params
 g_rounds = 3
-g_gridsizes = [40, 240]
+g_gridsizes = [40, 100]
 g_ping_interval = 1   # in seconds
 # something for number of chemistry sites
 g_targets = {
@@ -191,19 +191,47 @@ def profile_memory(cmd, process_name):
 
 
 # ================ CPU ================ 
-def profile_cpu(cmd):
+def profile_cpu(cmd, process_name):
     print(f'profiling cpu usage of \'{cmd}\'')
     
-    # TODO: independent var: system hardware
-    # produce n_rounds many cpu usage metrics at the default gridsize
+    # independent var: system hardware
+    for i in range(g_rounds):
+        pid = os.fork()                                 # fork process
 
-    # TODO: independent var: gridsize
-    # produce n_rounds many cpu usage metrics for each gridsize in gridsizes
+        if pid == 0:                                    # child process
+            pings = get_pings(process_name, '%cpu')     # ping active simulation
+            write_pings(                                # export data
+                pings,
+                f'raw-data/cpu/hw-{i}.csv'
+            )
+            sys.exit(0)                                 # kill child (⌣́_⌣̀)
 
-    # NOTE: we could maybe parse cmd print statements
-    # and send the results to export_cpu_data as a variable
+        else:                                           # parent process
+            subprocess.run(                             # run simulation
+                f'sh -c \'exec -a {process_name} {cmd}\'',
+                shell=True
+            )
+            os.wait()                                   # wait for child process to complete
+            
+    # independent var: gridsize
+    for gridsize in g_gridsizes:
+        for i in range(g_rounds):
+            pid = os.fork()                                 # fork process
 
-    pass
+            if pid == 0:                                    # child process
+                pings = get_pings(process_name, '%cpu')     # ping active simulation
+                write_pings(                                # export data
+                    pings,
+                    f'raw-data/cpu/gs-{gridsize}-{i}.csv'
+                )
+                sys.exit(0)                                 # kill child (⌣́_⌣̀)
+
+            else:                                           # parent process
+                subprocess.run(                             # run simulation
+                    f'sh -c \'exec -a {process_name} {cmd} {gridsize}\'',
+                     shell=True
+                )
+                os.wait()                                   # wait for child process to complete
 
 
 # ================ MAIN ================ 
@@ -225,11 +253,11 @@ def main(argv):
     elif option == 'mem':
         profile_memory(cmd, process_name)
     elif option == 'cpu':
-        profile_cpu(cmd)
+        profile_cpu(cmd, process_name)
     elif option == 'all':
         time_cmd(cmd)
         profile_memory(cmd, process_name)
-        profile_cpu(cmd)
+        profile_cpu(cmd, process_name)
     elif option == 'help':
         print_usage(None)
     else:
