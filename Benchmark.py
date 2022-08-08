@@ -1,21 +1,26 @@
-import sys, os, time
+import sys              # exiting
+import os               # forking and waiting
+import subprocess       # running cmds
+import time             # sleeping
+import pandas           # csv exporting
 
 
 # benchmarking params
 g_rounds = 3
 g_grid_sizes = [40, 240]
+g_ping_interval = 1   # in seconds
 # something for number of chemistry sites
-targets = {
-    'pid': 0,
-    'virt': 1,
-    'res': 2,
-    'shr': 3,
-    '%cpu': 4,
-    '%mem': 5,
+g_targets = {
+    'pid': 1,
+    'virt': 2,
+    'res': 3,
+    'shr': 4,
+    '%cpu': 5,
+    '%mem': 6,
     'time+': 7,
-    'command': 7,
-    'swap': 8,
-    'data': 9
+    'command': 8,
+    'swap': 9,
+    'data': 10
 }
 
 
@@ -78,43 +83,70 @@ def get_pings(process_name, target_metric):
 
         if sim_state == 'waiting':
             # check if the simulation process started running
-            if os.system(f'pidof {process_name} > /dev/null') == 0:
+            completed_process = subprocess.run(
+                f'pidof {process_name}',            # lookup the processes id
+                shell=True,                         # use a subshell
+                capture_output=True                 # record pid if found
+            )
+            if completed_process.returncode == 0:
                 # get pid of simulation process
-                sim_pid = os.popen(f'pidof {process_name}').read().strip()
+                sim_pid = completed_process.stdout.decode().strip()
+                print(f'[CHILD]: sim pid: {sim_pid}')
                 # set sim_state to running
                 sim_state = simulation_states[1]
 
         elif sim_state == 'running':
             # ping top
-            ping_top(sim_pid, target_metric) 
+            ping = ping_top(sim_pid, target_metric) 
+            # if ping succeeds add it to pings
+            if ping:
+                pings.append(ping)
             # check if the simulation process stopped running
-            if os.system(f'pidof {process_name} > /dev/null') != 0:
+            completed_process = subprocess.run(f'pidof {process_name} > /dev/null', shell=True)
+            if completed_process.returncode != 0:
                 sim_state = simulation_states[2]
         
-        time.sleep(1)     # don't spam pings
+        time.sleep(g_ping_interval)     # don't spam pings
     
     return pings
 
 def ping_top(sim_pid, target_metric):
+    ping = None
     ping_cmd = (
         'top -b '           # run top in batch mode
         '-n 2 '             # run 2 iterations
         '-d 0.1 '           # dt = .1 sec
-        f'-p {sim_pid} '    # only show data for sim process id
-        '2> /dev/null | '   # supress inactive pid error message
+        f'-p {sim_pid} | '    # only show data for sim process id
         'tail -1 | '        # get the last line of the output
         # print the process's cpu time and target metric
-        f'awk \'{{print ${targets["time+"]}, ${targets[target_metric]}}}\''
+        f'awk \'{{print ${g_targets["time+"]}, ${g_targets[target_metric]}}}\''
     )
 
-    string_metric = os.popen(ping_cmd).read()
-    if string_metric:
-        print(f'[CHILD]: string_metric: {string_metric}')
-    print('[CHILD]: Pinged top!')
-    pass
+    completed_process = subprocess.run(ping_cmd, shell=True, capture_output=True)
+    string_metric = completed_process.stdout.decode().strip()
 
-def write_pings(pings):
-    pass
+    """ If you ping top with a dead pid it does not error, nor print to stderr,
+        the afaik the only way to detect when this happens is to check if the
+        grabbed strings are the column headers, i.e., contain no digits """
+    if any(char.isdigit() for char in string_metric):
+        string_list_metric = string_metric.split(' ')
+
+        # parse the runtime in seconds from the top
+        run_time = string_list_metric[0]
+        string_list_metric[0] = str(
+            int(run_time[0]) * 60 +
+            int(run_time[2:4]) +
+            float(run_time[4:])
+        )
+
+        ping = tuple(string_list_metric)            # make the (cpu_time, target_metric) data point
+        assert len(ping) == 2                       # ensure expected ping format
+ 
+    print('[CHILD]: Pinged top!')
+    return ping
+
+def write_pings(pings, path):
+    pandas.DataFrame(pings).to_csv(path, index=False, header=False)
 
 
 # ================ MEMORY ================ 
@@ -123,27 +155,24 @@ def profile_memory(cmd, process_name):
     # independent var: system hardware
     for i in range(g_rounds):
         print('[PARENT]: Forking.')
-        pid = os.fork()             # fork process
+        pid = os.fork()                                # fork process
 
-        if pid == 0:                # if child process
+        if pid == 0:                                   # if; child process
             print('[CHILD]: Preparing to ping.')
             pings = get_pings(process_name, 'res')     # ping active simulation
+            print(f'[CHILD]: pings: {pings}')
             print('[CHILD]: Pinging done.')
-            write_pings(pings)      # write simulation data
-            sys.exit(0)             # reap child
+            write_pings(pings, f'raw-data/mem/hw-{i}.csv')
+            sys.exit(0)                                # kill child (⌣́_⌣̀)
 
-        else:                       # else; parent process
+        else:                                          # else; parent process
             print('[PARENT]: Running Simulation.')
-            os.system(f'sh -c \'exec -a {process_name} {cmd}\'')     # run simulation
+            subprocess.run(f'sh -c \'exec -a {process_name} {cmd}\'', shell=True)     # run simulation
             print('[PARENT]: Simulation done.')
-            os.wait()               # wait for child process to complete
+            os.wait()                                  # wait for child process to complete
             
     # independent var: gridsize
     # independent var: chemistry sites
-    export_memory_data()
-
-def export_memory_data():
-    print('exporting memory data')
 
 
 # ================ CPU ================ 
@@ -159,17 +188,6 @@ def profile_cpu(cmd):
     # NOTE: we could maybe parse cmd print statements
     # and send the results to export_cpu_data as a variable
 
-    export_cpu_data()
-
-def export_cpu_data():
-    print('exporting cpu data')
-    
-    # TODO: compile data into a csv for cpu usage
-    # format as follows
-    #   gridsize0     gridsize1    ...  gridsizeN
-    #   r0_gs0_usage  r0_gs1_usage ...  r0_gsN_usage
-    #   ...
-    #   rN_gs0_usage  rN_gs1_usage ...  rN_gsN_usage
     pass
 
 
