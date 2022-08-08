@@ -1,4 +1,3 @@
-from pickle import NONE
 import sys, os, time
 
 
@@ -6,6 +5,18 @@ import sys, os, time
 g_rounds = 3
 g_grid_sizes = [40, 240]
 # something for number of chemistry sites
+targets = {
+    'pid': 0,
+    'virt': 1,
+    'res': 2,
+    'shr': 3,
+    '%cpu': 4,
+    '%mem': 5,
+    'time+': 7,
+    'command': 7,
+    'swap': 8,
+    'data': 9
+}
 
 
 # ================ USAGE ================ 
@@ -60,6 +71,7 @@ def get_pings(process_name, target_metric):
     simulation_states = ['waiting', 'running', 'done']
     sim_state = simulation_states[0]
 
+    sim_pid = ''
     pings = []
 
     while sim_state == 'waiting' or sim_state == 'running':
@@ -67,13 +79,14 @@ def get_pings(process_name, target_metric):
         if sim_state == 'waiting':
             # check if the simulation process started running
             if os.system(f'pidof {process_name} > /dev/null') == 0:
+                # get pid of simulation process
+                sim_pid = os.popen(f'pidof {process_name}').read().strip()
                 # set sim_state to running
                 sim_state = simulation_states[1]
 
         elif sim_state == 'running':
             # ping top
-            print('[CHILD]: Pinged top!')
-            # ping_top(process_name, target_metric) 
+            ping_top(sim_pid, target_metric) 
             # check if the simulation process stopped running
             if os.system(f'pidof {process_name} > /dev/null') != 0:
                 sim_state = simulation_states[2]
@@ -82,7 +95,22 @@ def get_pings(process_name, target_metric):
     
     return pings
 
-def ping_top(process_name, target_metric):
+def ping_top(sim_pid, target_metric):
+    ping_cmd = (
+        'top -b '           # run top in batch mode
+        '-n 2 '             # run 2 iterations
+        '-d 0.1 '           # dt = .1 sec
+        f'-p {sim_pid} '    # only show data for sim process id
+        '2> /dev/null | '   # supress inactive pid error message
+        'tail -1 | '        # get the last line of the output
+        # print the process's cpu time and target metric
+        f'awk \'{{print ${targets["time+"]}, ${targets[target_metric]}}}\''
+    )
+
+    string_metric = os.popen(ping_cmd).read()
+    if string_metric:
+        print(f'[CHILD]: string_metric: {string_metric}')
+    print('[CHILD]: Pinged top!')
     pass
 
 def write_pings(pings):
@@ -99,9 +127,10 @@ def profile_memory(cmd, process_name):
 
         if pid == 0:                # if child process
             print('[CHILD]: Preparing to ping.')
-            pings = get_pings(process_name, NONE)     # ping active simulation
+            pings = get_pings(process_name, 'res')     # ping active simulation
             print('[CHILD]: Pinging done.')
             write_pings(pings)      # write simulation data
+            sys.exit(0)             # reap child
 
         else:                       # else; parent process
             print('[PARENT]: Running Simulation.')
