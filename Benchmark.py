@@ -7,7 +7,7 @@ import pandas           # csv exporting
 
 # benchmarking params
 g_rounds = 3
-g_grid_sizes = [40, 240]
+g_gridsizes = [40, 240]
 g_ping_interval = 1   # in seconds
 # something for number of chemistry sites
 g_targets = {
@@ -91,15 +91,12 @@ def get_pings(process_name, target_metric):
             if completed_process.returncode == 0:
                 # get pid of simulation process
                 sim_pid = completed_process.stdout.decode().strip()
-                print(f'[CHILD]: sim pid: {sim_pid}')
                 # set sim_state to running
                 sim_state = simulation_states[1]
 
         elif sim_state == 'running':
-            # ping top
             ping = ping_top(sim_pid, target_metric) 
-            # if ping succeeds add it to pings
-            if ping:
+            if ping:    # if ping succeeds add it to the list of pings
                 pings.append(ping)
             # check if the simulation process stopped running
             completed_process = subprocess.run(f'pidof {process_name} > /dev/null', shell=True)
@@ -142,7 +139,6 @@ def ping_top(sim_pid, target_metric):
         ping = tuple(string_list_metric)            # make the (cpu_time, target_metric) data point
         assert len(ping) == 2                       # ensure expected ping format
  
-    print('[CHILD]: Pinged top!')
     return ping
 
 def write_pings(pings, path):
@@ -154,24 +150,43 @@ def profile_memory(cmd, process_name):
     print(f'\nProfiling memory usage of \'{cmd}\'.\n')
     # independent var: system hardware
     for i in range(g_rounds):
-        print('[PARENT]: Forking.')
-        pid = os.fork()                                # fork process
+        pid = os.fork()                                 # fork process
 
-        if pid == 0:                                   # if; child process
-            print('[CHILD]: Preparing to ping.')
-            pings = get_pings(process_name, 'res')     # ping active simulation
-            print(f'[CHILD]: pings: {pings}')
-            print('[CHILD]: Pinging done.')
-            write_pings(pings, f'raw-data/mem/hw-{i}.csv')
-            sys.exit(0)                                # kill child (⌣́_⌣̀)
+        if pid == 0:                                    # child process
+            pings = get_pings(process_name, 'res')      # ping active simulation
+            write_pings(                                # export data
+                pings,
+                f'raw-data/mem/hw-{i}.csv'
+            )
+            sys.exit(0)                                 # kill child (⌣́_⌣̀)
 
-        else:                                          # else; parent process
-            print('[PARENT]: Running Simulation.')
-            subprocess.run(f'sh -c \'exec -a {process_name} {cmd}\'', shell=True)     # run simulation
-            print('[PARENT]: Simulation done.')
-            os.wait()                                  # wait for child process to complete
+        else:                                           # parent process
+            subprocess.run(                             # run simulation
+                f'sh -c \'exec -a {process_name} {cmd}\'',
+                shell=True
+            )
+            os.wait()                                   # wait for child process to complete
             
     # independent var: gridsize
+    for gridsize in g_gridsizes:
+        for i in range(g_rounds):
+            pid = os.fork()                                 # fork process
+
+            if pid == 0:                                    # child process
+                pings = get_pings(process_name, 'res')      # ping active simulation
+                write_pings(                                # export data
+                    pings,
+                    f'raw-data/mem/gs-{gridsize}-{i}.csv'
+                )
+                sys.exit(0)                                 # kill child (⌣́_⌣̀)
+
+            else:                                           # parent process
+                subprocess.run(                             # run simulation
+                    f'sh -c \'exec -a {process_name} {cmd} {gridsize}\'',
+                     shell=True
+                )
+                os.wait()                                   # wait for child process to complete
+
     # independent var: chemistry sites
 
 
