@@ -8,9 +8,10 @@ import pandas           # csv exporting
 # benchmarking params
 g_rounds = 3
 g_gridsizes = [40, 100]
-g_ping_interval = 1   # in seconds
+g_ping_interval = 0.1       # in seconds
 # something for number of chemistry sites
-g_targets = {
+
+g_targets = {   # see https://man7.org/linux/man-pages/man1/top.1.html for explanation
     'pid': 1,
     'virt': 2,
     'res': 3,
@@ -31,53 +32,22 @@ def print_usage(opt):
     usage = \
     'Usage: python3 Benchmark.py [option] [cmd]\n'+ \
     '   options:\n'+ \
+    '       all  - benchmark all options\n'+ \
     '       time - benchmark runtime\n'+ \
     '       mem  - profile memory usage\n'+ \
     '       cpu  - profile cpu usage\n'+ \
-    '       all  - benchmark all options\n'+ \
     '       help - display usage'
     print(usage)
 
 
-# ================ TIMING ================ 
-def time_cmd(cmd):
-    print(f'timing \'{cmd}\'')
-
-    # TODO: independent var: system hardware
-    # produce n_rounds many runtimes at the default gridsize
-
-    # TODO: independent var: gridsize
-    # produce n_rounds many runtimes for each gridsize in gridsizes
-
-    # NOTE: rutimes are simple, we could maybe parse cmd print
-    # statements and send the results to export_time_data as a variable
-
-    export_time_data()
-
-def export_time_data():
-    print('exporting time data')
-
-    # TODO: compile data into a csv for system hardware
-    # should just be one row of all the runtimes
-    # NOTE: need to track who's machine was used to obtain this data
-    # maybe do so in filename or something with whoami cmd.
-    
-    # TODO: compile data into a csv for gridsizes
-    # format as follows
-    #   gridsize0   gridsize1    ... gridsizeN
-    #   r0_gs0_time r0_gs1_time      r0_gsN_time
-    #   ...
-    #   rN_gs0_time rN_gs1_time      rN_gsN_time
-    pass
-
-
 # ================ PINGING ================ 
-def get_pings(process_name, target_metric):
+def get_pings(process_name, target_metrics):
+    # organizing simple state machine
     simulation_states = ['waiting', 'running', 'done']
     sim_state = simulation_states[0]
 
-    sim_pid = ''
-    pings = []
+    sim_pid = ''    # string representation of the simulations pid
+    pings = []      # list of pings; (cpu_run_time, target_metric_0, ... target_metric_N)
 
     while sim_state == 'waiting' or sim_state == 'running':
 
@@ -95,7 +65,7 @@ def get_pings(process_name, target_metric):
                 sim_state = simulation_states[1]
 
         elif sim_state == 'running':
-            ping = ping_top(sim_pid, target_metric) 
+            ping = ping_top(sim_pid, target_metrics) 
             if ping:    # if ping succeeds add it to the list of pings
                 pings.append(ping)
             # check if the simulation process stopped running
@@ -107,16 +77,21 @@ def get_pings(process_name, target_metric):
     
     return pings
 
-def ping_top(sim_pid, target_metric):
+def ping_top(sim_pid, target_metrics):
     ping = None
-    ping_cmd = (
+    awk_cmd = (             # format awk portion of ping command
+        'awk \'{print ' +
+        # '$target_index_0, ... $target_index_N'
+        ', '.join(['${0}'.format(g_targets[target]) for target in target_metrics]) +
+        '}\''
+    )
+    ping_cmd = (            # format ping command
         'top -b '           # run top in batch mode
         '-n 2 '             # run 2 iterations
         '-d 0.1 '           # dt = .1 sec
-        f'-p {sim_pid} | '    # only show data for sim process id
-        'tail -1 | '        # get the last line of the output
-        # print the process's cpu time and target metric
-        f'awk \'{{print ${g_targets["time+"]}, ${g_targets[target_metric]}}}\''
+        f'-p {sim_pid} | '  # only show data for sim process id
+        'tail -1 | ' +      # get the last line of the output
+        awk_cmd
     )
 
     completed_process = subprocess.run(ping_cmd, shell=True, capture_output=True)
@@ -136,27 +111,39 @@ def ping_top(sim_pid, target_metric):
             float(run_time[4:])
         )
 
-        ping = tuple(string_list_metric)            # make the (cpu_time, target_metric) data point
-        assert len(ping) == 2                       # ensure expected ping format
+        ping = tuple(string_list_metric)                # make the (cpu_time, target_metric) data point
+        assert len(ping) == len(target_metrics)         # ensure expected ping format 
  
     return ping
 
-def write_pings(pings, path):
-    pandas.DataFrame(pings).to_csv(path, index=False, header=False)
+def write_pings(pings, target_metrics, path):
+    # last recorded cpu time of simulation, off by a max of +- g_ping_interval
+    last_cpu_time = pings[-1][0]
+    # add last cpu time to end of first tuple
+    pings[0] = tuple(list(pings[0]) + [last_cpu_time])
+    # add column headers
+    csv_data = [tuple(target_metrics + ['total-runtime'])] + pings
+    # export data
+    pandas.DataFrame(csv_data).to_csv(path, index=False, header=False)
 
 
-# ================ MEMORY ================ 
-def profile_memory(cmd, process_name):
-    print(f'\nProfiling memory usage of \'{cmd}\'.\n')
+# ================ Profiling ================ 
+def profile(cmd, process_name, target_metrics):
+    print(f'\nProfiling \'{cmd}\'.\n')
+    
     # independent var: system hardware
     for i in range(g_rounds):
         pid = os.fork()                                 # fork process
 
         if pid == 0:                                    # child process
-            pings = get_pings(process_name, 'res')      # ping active simulation
+            pings = get_pings(                          # ping active simulation
+                process_name,
+                target_metrics
+            )
             write_pings(                                # export data
                 pings,
-                f'raw-data/mem/hw-{i}.csv'
+                target_metrics,
+                f'raw-data/hw-{i}.csv'
             )
             sys.exit(0)                                 # kill child (⌣́_⌣̀)
 
@@ -173,10 +160,14 @@ def profile_memory(cmd, process_name):
             pid = os.fork()                                 # fork process
 
             if pid == 0:                                    # child process
-                pings = get_pings(process_name, 'res')      # ping active simulation
+                pings = get_pings(                          # ping active simulation
+                    process_name,
+                    target_metrics
+                )
                 write_pings(                                # export data
                     pings,
-                    f'raw-data/mem/gs-{gridsize}-{i}.csv'
+                    target_metrics,
+                    f'raw-data/gs-{gridsize}-{i}.csv'
                 )
                 sys.exit(0)                                 # kill child (⌣́_⌣̀)
 
@@ -188,50 +179,6 @@ def profile_memory(cmd, process_name):
                 os.wait()                                   # wait for child process to complete
 
     # independent var: chemistry sites
-
-
-# ================ CPU ================ 
-def profile_cpu(cmd, process_name):
-    print(f'profiling cpu usage of \'{cmd}\'')
-    
-    # independent var: system hardware
-    for i in range(g_rounds):
-        pid = os.fork()                                 # fork process
-
-        if pid == 0:                                    # child process
-            pings = get_pings(process_name, '%cpu')     # ping active simulation
-            write_pings(                                # export data
-                pings,
-                f'raw-data/cpu/hw-{i}.csv'
-            )
-            sys.exit(0)                                 # kill child (⌣́_⌣̀)
-
-        else:                                           # parent process
-            subprocess.run(                             # run simulation
-                f'sh -c \'exec -a {process_name} {cmd}\'',
-                shell=True
-            )
-            os.wait()                                   # wait for child process to complete
-            
-    # independent var: gridsize
-    for gridsize in g_gridsizes:
-        for i in range(g_rounds):
-            pid = os.fork()                                 # fork process
-
-            if pid == 0:                                    # child process
-                pings = get_pings(process_name, '%cpu')     # ping active simulation
-                write_pings(                                # export data
-                    pings,
-                    f'raw-data/cpu/gs-{gridsize}-{i}.csv'
-                )
-                sys.exit(0)                                 # kill child (⌣́_⌣̀)
-
-            else:                                           # parent process
-                subprocess.run(                             # run simulation
-                    f'sh -c \'exec -a {process_name} {cmd} {gridsize}\'',
-                     shell=True
-                )
-                os.wait()                                   # wait for child process to complete
 
 
 # ================ MAIN ================ 
@@ -249,15 +196,13 @@ def main(argv):
 
     # option handling
     if option == 'time':
-        time_cmd(cmd)
+        profile(cmd, process_name, ['time+'])
     elif option == 'mem':
-        profile_memory(cmd, process_name)
+        profile(cmd, process_name, ['time+', 'res'])
     elif option == 'cpu':
-        profile_cpu(cmd, process_name)
+        profile(cmd, process_name, ['time+', '%cpu'])
     elif option == 'all':
-        time_cmd(cmd)
-        profile_memory(cmd, process_name)
-        profile_cpu(cmd, process_name)
+        profile(cmd, process_name, ['time+', 'res', '%cpu'])
     elif option == 'help':
         print_usage(None)
     else:
