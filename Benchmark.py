@@ -11,6 +11,8 @@ g_gridsizes = [40, 100]
 g_ping_interval = 0.1       # in seconds
 # something for number of chemistry sites
 
+# possible target metrics, the ordering depends on the user's top configuration
+# these indexes will not be accurate if the given toprc is not used!
 g_targets = {   # see https://man7.org/linux/man-pages/man1/top.1.html for explanation
     'pid': 1,
     'virt': 2,
@@ -98,7 +100,7 @@ def ping_top(sim_pid, target_metrics):
     string_metric = completed_process.stdout.decode().strip()
 
     """ If you ping top with a dead pid it does not error, nor print to stderr,
-        the afaik the only way to detect when this happens is to check if the
+        afaik the only way to detect when this happens is to check if the
         grabbed strings are the column headers, i.e., contain no digits """
     if any(char.isdigit() for char in string_metric):
         string_list_metric = string_metric.split(' ')
@@ -111,7 +113,7 @@ def ping_top(sim_pid, target_metrics):
             float(run_time[4:])
         )
 
-        ping = tuple(string_list_metric)                # make the (cpu_time, target_metric) data point
+        ping = tuple(string_list_metric)                # construct ping: (cpu_run_time, target_metric_0, ... target_metric_N)
         assert len(ping) == len(target_metrics)         # ensure expected ping format 
  
     return ping
