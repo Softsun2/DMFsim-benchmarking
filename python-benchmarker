@@ -1,0 +1,42 @@
+#!/bin/sh
+
+# benchmarking script launcher for profiling the python implementation
+
+# guard clause
+test -d ../../DMFsim || { echo DMFsim is not the parent dir! && exit 1; }
+
+TOPRC_PATH="$HOME"/.config/procps/toprc
+
+bRun() {
+  # verify/install config dir
+  ( test -d "$HOME"/.config/procps && echo "toprc config dir verified." ) ||
+  ( mkdir -p "$HOME/.config/procps" && echo "toprc config dir installed." )
+
+  # verify/install toprc
+  ( test -f "$TOPRC_PATH" && diff toprc "$TOPRC_PATH" >/dev/null && echo "toprc verified." ) ||
+  ( ( test -f "$TOPRC_PATH" && mv "$TOPRC_PATH" "$TOPRC_PATH".bckp ) ; cp toprc "$TOPRC_PATH" && echo "toprc installed." )
+
+  # verify/install Tutorial.py
+  ( diff Tutorial.py ../Tutorial.py >/dev/null && echo "Tutorial.py verified." ) ||
+  ( mv ../Tutorial.py ../Tutorial.py.bckp && cp Tutorial.py .. && echo "Tutorial.py patched." )
+
+  # run benchmarking script
+  python3 Benchmark.py all python3 ../Tutorial.py
+}
+
+bRestore() {
+  # restore toprc
+  test -f "$TOPRC_PATH".bckp && mv "$TOPRC_PATH".bckp "$TOPRC_PATH" && echo "toprc restored." ||
+  echo "no toprc to restore"
+
+  # restore Tutorial.py
+  test -f ../Tutorial.py.bckp && mv ../Tutorial.py.bckp ../Tutorial.py && echo "Tutorial.py restored." ||
+  echo "no Tutorial.py to restore."
+}
+
+# cmd line args handler
+case "$1" in
+  run) bRun ;;
+  restore) bRestore ;;
+  *) bRun ;;
+esac

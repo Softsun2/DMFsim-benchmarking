@@ -7,8 +7,8 @@ import pandas           # csv exporting
 
 # benchmarking params
 g_rounds = 3
-g_gridsizes = [40, 100]
-g_ping_interval = 0.1       # in seconds
+g_gridsizes = [40, 100, 160, 220]
+g_ping_interval = 0.07       # in seconds
 # something for number of chemistry sites
 
 # possible target metrics, the ordering depends on the user's top configuration
@@ -132,9 +132,15 @@ def write_pings(pings, target_metrics, path):
 # ================ Profiling ================ 
 def profile(cmd, process_name, target_metrics):
     print(f'\nProfiling \'{cmd}\'.\n')
+    # get user name of user running the script
+    user_string = subprocess.run('whoami', capture_output=True).stdout.decode().strip()
+    # create user dir if necessary
+    subprocess.run(f'test -d raw-data/{user_string} || mkdir raw-data/{user_string}', shell=True)
     
     # independent var: system hardware
     for i in range(g_rounds):
+        print(f'[PROFILING] --> variable: system hardware (1/2), round: {i+1} ({i+1}/{g_rounds})')
+
         pid = os.fork()                                 # fork process
 
         if pid == 0:                                    # child process
@@ -145,7 +151,7 @@ def profile(cmd, process_name, target_metrics):
             write_pings(                                # export data
                 pings,
                 target_metrics,
-                f'raw-data/hw-{i}.csv'
+                f'raw-data/{user_string}/hw-{i}.csv'
             )
             sys.exit(0)                                 # kill child (⌣́_⌣̀)
 
@@ -157,8 +163,10 @@ def profile(cmd, process_name, target_metrics):
             os.wait()                                   # wait for child process to complete
             
     # independent var: gridsize
-    for gridsize in g_gridsizes:
-        for i in range(g_rounds):
+    for i, gridsize in enumerate(g_gridsizes):
+        for j in range(g_rounds):
+            print(f'[PROFILING] --> variable: gridsize (2/2), gridsize: {gridsize} ({i+1}/{len(g_gridsizes)}), round: {j+1} ({j+1}/{g_rounds})')
+
             pid = os.fork()                                 # fork process
 
             if pid == 0:                                    # child process
@@ -169,7 +177,7 @@ def profile(cmd, process_name, target_metrics):
                 write_pings(                                # export data
                     pings,
                     target_metrics,
-                    f'raw-data/gs-{gridsize}-{i}.csv'
+                    f'raw-data/{user_string}/gs-{gridsize}-{j}.csv'
                 )
                 sys.exit(0)                                 # kill child (⌣́_⌣̀)
 
@@ -209,6 +217,8 @@ def main(argv):
         print_usage(None)
     else:
         print_usage(option)
+    
+    print('\nProfiling done. See \'raw-data\' for output.\n')
 
 
 if __name__ == '__main__':      # entry point

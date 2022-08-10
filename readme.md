@@ -25,20 +25,35 @@ The plan is to average the data over multiple rounds of benchmarking on all of o
 ## [The Script](Benchmark.py)
 The script obtains data with [top](https://man7.org/linux/man-pages/man1/top.1.html) and exports that data to a spreadsheet readable format (csv).
 
+
 ### Usage
+#### Using my [shell script](python-benchmarker)
+You must install the benchmarking repo in the `DMFsim` repo to run this script. The following command installs the provided `toprc` and `Tutorial.py` then runs the benchmarking script.
+```
+./python-benchmarker run
+```
+The following command restores the user's original `toprc` and `Tutorial.py` if they existed prior to running the script.
+```
+./python-benchmarker restore
+```
+#### Manually
 You will most likely only need to run the command `python3 Benchmarking.py all <command-to-run-simulation>`. For example running the script on the python implementation `python3 Benchmarking.py all python3 ../Tutorial.py`, note that the paths here are relative, be mindful of which directory you are with respect to the `DMFsim` repo and the benchmarking repo. Additional usage can be displayed with `python3 Benchmarking.py help`. The `all` option means that the output csv files will contain data for all the benchmarking metrics.
 
-#### Output Data
+
+### Output Data
 Data is exported to a directory within the benchmarking repo named `raw-data`. The file prefix `hw` for "hardware" means that the simulation was ran at the default gridsize, for the independent variable: system hardware. The file prefix `gs-<gridsize>` for "gridsize" means that the simulation was ran at the gridsize `<gridsize>`, for the independent variable: gridsize. All csv file names end with an integer identifying the benchmarking round of corresponding independent variable. Each column header describes that column's data. See top's [man page](https://man7.org/linux/man-pages/man1/top.1.html) for an explanation of the headers used. TODO: Go over units. TODO: Mention total runtime caveat.
 
-### Assumptions
+
+### Assumptions (the shell script takes care of these assumptions)
 * **The user's top is configured as mine.** The script will **not** work if the user's top is not configured as mine! I've include my `toprc` to be copied. Make a backup of your toprc (if you want) and use the one provided. The user's toprc is located at `~/.config/procps/toprc`.
 * **The executable/cmd to run the simulation can take gridsize as a command line argument.** The script will **not** work if the simulation can't take gridsize as a command line arg, I've included a modified `Tutorial.py` to handle this in this repo to replace the old `Tutorial.py`.
+
 
 ### top
 The script uses `top` to obtain all metrics. Top's readings are more transparent and the scripts runtime will be drastically reduced. With top it's easy to retrieve various metrics interchangeably. This will require threading or processing to ping top in parallel with the running the simulation.
 
 The script uses multiprocessing. Top records process's hardware usage *as those processes run* which means we have to incorporate multiprocessing or threading. Shared data isn't necessary so we use child processes to "ping" top as the parent process runs the simulation. A ping is a data point (tuple) of first the simulation's current cpu runtime followed by the target metrics.
+
 
 # Presentation
 
