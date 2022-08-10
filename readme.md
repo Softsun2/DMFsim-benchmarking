@@ -1,15 +1,14 @@
 # Plan
-1. Decide on a benchmarking procedure.
+1. **XXX** Decide on a benchmarking procedure.
     * Still haven't chosen exact methods for producing runtimes and cpu usage.
-2. Implement this procedure with a script.
+2. **XXX** Implement this procedure with a script.
     * The script should do two things, obtain the data with the chosen benchmarking tools and export that data to a spreadsheet readable format.
 3. Plot the data.
-4. Make the presentation.
+4. Manual limitation testing
+5. Make the presentation.
 
 
 # Benchmarking
-Ajay wants a draft of the presentation by Wednesday.
-
 We have two objectives, to obtain a reference for which to compare future code to as well as identifying bottlenecks and breaking points of the existing code.
 
 The goal is to produce a reusable benchmarking procedure that's independent of the programs implementation.
@@ -24,27 +23,36 @@ The plan is to average the data over multiple rounds of benchmarking on all of o
 
 
 ## [The Script](Benchmark.py)
-As mentioned in the plan, the script should obtain data with the chosen benchmarking tools and export that data to a spreadsheet readable format. The scripts usage can be displayed with `python3 Benchmark.py help`. The basic usage is `python3 Benchmark.py [option] [cmd]` when the script is finished we would most likely run `python3 benchmark.py all python3 ../DMFsim/Tutorial.py`, this assumes that this repo is a sibling to the python repo. This script makes the assumption that we can pass benchmarking parameters such as girdsize to the cmd, I've tweaked `Tutorial.py` to handle this, this is subject to change.
+The script obtains data with [top](https://man7.org/linux/man-pages/man1/top.1.html) and exports that data to a spreadsheet readable format (csv).
 
 
-### Timing
+### Usage
+#### Using my [shell script](python-benchmarker)
+You must install the benchmarking repo in the `DMFsim` repo to run this script. The following command installs the provided `toprc` and `Tutorial.py` then runs the benchmarking script.
+```
+./python-benchmarker run
+```
+The following command restores the user's original `toprc` and `Tutorial.py` if they existed prior to running the script.
+```
+./python-benchmarker restore
+```
+#### Manually
+You will most likely only need to run the command `python3 Benchmarking.py all <command-to-run-simulation>`. For example running the script on the python implementation `python3 Benchmarking.py all python3 ../Tutorial.py`, note that the paths here are relative, be mindful of which directory you are with respect to the `DMFsim` repo and the benchmarking repo. Additional usage can be displayed with `python3 Benchmarking.py help`. The `all` option means that the output csv files will contain data for all the benchmarking metrics.
 
-Any timer really, perf's timer seems accurate.
+
+### Output Data
+Data is exported to a directory within the benchmarking repo named `raw-data`. The file prefix `hw` for "hardware" means that the simulation was ran at the default gridsize, for the independent variable: system hardware. The file prefix `gs-<gridsize>` for "gridsize" means that the simulation was ran at the gridsize `<gridsize>`, for the independent variable: gridsize. All csv file names end with an integer identifying the benchmarking round of corresponding independent variable. Each column header describes that column's data. See top's [man page](https://man7.org/linux/man-pages/man1/top.1.html) for an explanation of the headers used. TODO: Go over units. TODO: Mention total runtime caveat.
 
 
-### Memory Profiling
+### Assumptions (the shell script takes care of these assumptions)
+* **The user's top is configured as mine.** The script will **not** work if the user's top is not configured as mine! I've include my `toprc` to be copied. Make a backup of your toprc (if you want) and use the one provided. The user's toprc is located at `~/.config/procps/toprc`.
+* **The executable/cmd to run the simulation can take gridsize as a command line argument.** The script will **not** work if the simulation can't take gridsize as a command line arg, I've included a modified `Tutorial.py` to handle this in this repo to replace the old `Tutorial.py`.
 
-#### Valgrind ([Massif](https://valgrind.org/docs/manual/ms-manual.html))
-(I've settled on this, let me know if you would like to use another option) We can use valgrind to examine memory usage (heap consumption with respect to time) with `valgrind --tool=massif python3 Tutorial.py`, this will output a `ms_print` readable file with the format massif.out.\<pid\> (See the script for the exact command). There's a gui to better visualize the output called *massif-visualizer*. I like this option becuase it's independent from python. Although, valgrind is unix only. Doesn't profile at the function level (I believe). I found a [massif parser](https://github.com/MathieuTurcotte/msparser) that we could use to export the data.
 
+### top
+The script uses `top` to obtain all metrics. Top's readings are more transparent and the scripts runtime will be drastically reduced. With top it's easy to retrieve various metrics interchangeably. This will require threading or processing to ping top in parallel with the running the simulation.
 
-### CPU Profiling
-
-#### Perf
-Uses performance counters to monitor hardware events such as instructions executed. `perf stat python3 Tutorial.py` produces event counts. Not sure what metric we'd use from this? Isn't clock cycles just another way of saying the runtime? Maybe the number of instructions executed would be better? Will need to look into this.
-
-### Top
-https://stackoverflow.com/questions/1221555/retrieve-cpu-usage-and-memory-usage-of-a-single-process-on-linux
+The script uses multiprocessing. Top records process's hardware usage *as those processes run* which means we have to incorporate multiprocessing or threading. Shared data isn't necessary so we use child processes to "ping" top as the parent process runs the simulation. A ping is a data point (tuple) of first the simulation's current cpu runtime followed by the target metrics.
 
 
 # Presentation
