@@ -114,8 +114,8 @@ def ping_top(sim_pid, target_metrics):
                 
                 if suffix.isdigit():      # no suffix: kibi
                     string_list_metric[i] = str(round((float(string_mem_metric) * 9.5367431640625e-7), 3))
-                elif suffix == 'm':       # m: mibi
-                    string_list_metric[i] = str(round((float(string_mem_metric[:-1]) * 0.00012209966), 3))
+                elif suffix == 'm':       # m: mebi
+                    string_list_metric[i] = str(round((float(string_mem_metric[:-1]) * 0.000976563), 3))
                 elif suffix == 'g':       # g: gibi
                     string_list_metric[i] = string_list_metric[i][:-1]
                 elif suffix == 't':       # t: tebi
