@@ -110,7 +110,7 @@ def ping_top(sim_pid, target_metrics):
         string_list_metric[0] = str(
             int(run_time.split(':')[0]) * 60 +
             int(run_time.split(':')[1][:2]) +
-            float(run_time.split(':')[1][3:])
+            float(run_time.split(':')[1][2:])
         )
 
         ping = tuple(string_list_metric)                # construct ping: (cpu_run_time, target_metric_0, ... target_metric_N)
