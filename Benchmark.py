@@ -108,9 +108,9 @@ def ping_top(sim_pid, target_metrics):
         # parse the runtime in seconds from the top
         run_time = string_list_metric[0]
         string_list_metric[0] = str(
-            int(run_time[0]) * 60 +
-            int(run_time[2:4]) +
-            float(run_time[4:])
+            int(run_time.split(':')[0]) * 60 +
+            int(run_time.split(':')[1][:2]) +
+            float(run_time.split(':')[1][3:])
         )
 
         ping = tuple(string_list_metric)                # construct ping: (cpu_run_time, target_metric_0, ... target_metric_N)
