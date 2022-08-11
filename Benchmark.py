@@ -110,18 +110,18 @@ def ping_top(sim_pid, target_metrics):
         for i, target_metric in enumerate(target_metrics):
             if target_metric in g_memory_targets:
                 string_mem_metric = string_list_metric[i]
-                suffix = string_mem_metric[1]
+                suffix = string_mem_metric[-1]
                 
                 if suffix.isdigit():      # no suffix: kibi
                     string_list_metric[i] = str(round((float(string_mem_metric) * 9.5367431640625e-7), 3))
                 elif suffix == 'm':       # m: mibi
-                    string_list_metric[i] = str(round((float(string_mem_metric) * 0.00012207), 3))
+                    string_list_metric[i] = str(round((float(string_mem_metric[:-1]) * 0.00012207), 3))
                 elif suffix == 't':       # t: tebi
-                    string_list_metric[i] = str(round((float(string_mem_metric) * 1023.99737856), 3))
+                    string_list_metric[i] = str(round((float(string_mem_metric[:-1]) * 1023.99737856), 3))
                 elif suffix == 'p':       # p: pebi
-                    string_list_metric[i] = str(round((float(string_mem_metric) * 1048573.315645), 3))
+                    string_list_metric[i] = str(round((float(string_mem_metric[:-1]) * 1048573.315645), 3))
                 elif suffix == 'e':       # e: exbi (lol)
-                    string_list_metric[i] = str(round((float(string_mem_metric) * 1.074e+9), 3))
+                    string_list_metric[i] = str(round((float(string_mem_metric[:-1]) * 1.074e+9), 3))
 
         # parse the runtime in seconds from the top
         run_time = string_list_metric[0]
