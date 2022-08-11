@@ -133,7 +133,7 @@ def write_pings(pings, target_metrics, path):
 def profile(cmd, process_name, target_metrics):
     print(f'\nProfiling \'{cmd}\'.\n')
     # get user name of user running the script
-    user_string = subprocess.run('whoami', capture_output=True).stdout.decode().strip()
+    user_string = subprocess.run('hostname', capture_output=True).stdout.decode().strip()
     # create user dir if necessary
     subprocess.run(f'test -d raw-data/{user_string} || mkdir raw-data/{user_string}', shell=True)
     
