@@ -6,8 +6,8 @@ import pandas           # csv exporting
 
 
 # benchmarking params
-g_rounds = 3
-g_gridsizes = [100, 200, 300, 500, 1000]
+g_rounds = 1
+g_gridsizes = [1000]
 g_ping_interval = 0.07       # in seconds
 # something for number of chemistry sites
 
@@ -25,6 +25,7 @@ g_targets = {   # see https://man7.org/linux/man-pages/man1/top.1.html for expla
     'swap': 9,
     'data': 10
 }
+g_memory_targets = ['virt', 'res', 'shr', 'swap', 'data']
 
 
 # ================ USAGE ================ 
@@ -105,6 +106,23 @@ def ping_top(sim_pid, target_metrics):
     if any(char.isdigit() for char in string_metric):
         string_list_metric = string_metric.split(' ')
 
+        # ensure memory metrics are in Gibibytes
+        for i, target_metric in enumerate(target_metrics):
+            if target_metric in g_memory_targets:
+                string_mem_metric = string_list_metric[i]
+                suffix = string_mem_metric[1]
+                
+                if suffix.isdigit():      # no suffix: kibi
+                    string_list_metric[i] = str(round((float(string_mem_metric) * 9.5367431640625e-7), 3))
+                elif suffix == 'm':       # m: mibi
+                    string_list_metric[i] = str(round((float(string_mem_metric) * 0.00012207), 3))
+                elif suffix == 't':       # t: tebi
+                    string_list_metric[i] = str(round((float(string_mem_metric) * 1023.99737856), 3))
+                elif suffix == 'p':       # p: pebi
+                    string_list_metric[i] = str(round((float(string_mem_metric) * 1048573.315645), 3))
+                elif suffix == 'e':       # e: exbi (lol)
+                    string_list_metric[i] = str(round((float(string_mem_metric) * 1.074e+9), 3))
+
         # parse the runtime in seconds from the top
         run_time = string_list_metric[0]
         string_list_metric[0] = str(
@@ -134,6 +152,7 @@ def profile(cmd, process_name, target_metrics):
     print(f'\nProfiling \'{cmd}\'.\n')
     # get user name of user running the script
     user_string = subprocess.run('hostname', capture_output=True).stdout.decode().strip()
+    # user_string = "big-gs"
     # create user dir if necessary
     subprocess.run(f'test -d raw-data/{user_string} || mkdir raw-data/{user_string}', shell=True)
     

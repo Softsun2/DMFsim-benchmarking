@@ -101,12 +101,13 @@ random.seed(42)
 #and the lab grid width
 datalen = 5
 
+# Command line arg patch -- Softsun2
 if len(sys.argv) == 2 and sys.argv[1].isdigit():
     # pass width as only cmd line arg
     width = int(sys.argv[1])
 else:
-    # if no valid cmd line arg default to 40
-    width = 40
+    # if no valid cmd line arg default to 100
+    width = 100
 
 #Get a list of the interior grid coordinates.
 #This is where the reaction sites *could* be placed.
