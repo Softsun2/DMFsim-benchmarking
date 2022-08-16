@@ -159,29 +159,29 @@ def profile(cmd, process_name, target_metrics):
     subprocess.run(f'test -d raw-data/{user_string} || mkdir raw-data/{user_string}', shell=True)
     
     # independent var: system hardware
-    for i in range(g_rounds):
-        print(f'[PROFILING] --> variable: system hardware (1/2), round: {i+1} ({i+1}/{g_rounds})')
+    # for i in range(g_rounds):
+    #     print(f'[PROFILING] --> variable: system hardware (1/2), round: {i+1} ({i+1}/{g_rounds})')
 
-        pid = os.fork()                                 # fork process
+    #     pid = os.fork()                                 # fork process
 
-        if pid == 0:                                    # child process
-            pings = get_pings(                          # ping active simulation
-                process_name,
-                target_metrics
-            )
-            write_pings(                                # export data
-                pings,
-                target_metrics,
-                f'raw-data/{user_string}/hw-{i}.csv'
-            )
-            sys.exit(0)                                 # kill child (⌣́_⌣̀)
+    #     if pid == 0:                                    # child process
+    #         pings = get_pings(                          # ping active simulation
+    #             process_name,
+    #             target_metrics
+    #         )
+    #         write_pings(                                # export data
+    #             pings,
+    #             target_metrics,
+    #             f'raw-data/{user_string}/hw-{i}.csv'
+    #         )
+    #         sys.exit(0)                                 # kill child (⌣́_⌣̀)
 
-        else:                                           # parent process
-            subprocess.run(                             # run simulation
-                f'sh -c \'exec -a {process_name} {cmd}\'',
-                shell=True
-            )
-            os.wait()                                   # wait for child process to complete
+    #     else:                                           # parent process
+    #         subprocess.run(                             # run simulation
+    #             f'sh -c \'exec -a {process_name} {cmd}\'',
+    #             shell=True
+    #         )
+    #         os.wait()                                   # wait for child process to complete
             
     # independent var: gridsize
     for i, gridsize in enumerate(g_gridsizes):
