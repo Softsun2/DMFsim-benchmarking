@@ -28,8 +28,8 @@ bRun() {
   ( diff AStar.py ../AStar.py >/dev/null && echo "AStar.py verified." ) ||
   ( mv ../AStar.py ../AStar.py.bckp && cp AStar.py .. && echo "AStar.py patched." )
 
-  # run benchmarking script
-  python3 Benchmark.py all python3 ../Tutorial.py
+  # run benchmarking script & save the output
+  python3 Benchmark.py all python3 ../Tutorial.py > benchmarker-logs
 }
 
 bRestore() {
