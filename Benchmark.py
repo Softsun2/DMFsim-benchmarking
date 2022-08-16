@@ -7,7 +7,7 @@ import pandas           # csv exporting
 
 # benchmarking params
 g_rounds = 3
-g_gridsizes = [(i + 1) * 50 for i in range(20)]
+g_gridsizes = [ i for i in range(500, 2100, 100) ]
 g_ping_interval = 0.07       # in seconds
 # something for number of chemistry sites
 
