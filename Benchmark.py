@@ -234,9 +234,10 @@ def format_data(hardware_gridsize, gridsize_machine, gridsizes):
                 if machine_dir == gridsize_machine:
                     gridsize_files.append(os.path.join(machine_path, machine_file))
 
-    sort_on = lambda ele: int(ele.split('/')[-1].split('-')[1])
-    hardware_files.sort(key=sort_on)
-    gridsize_files.sort(key=sort_on)
+    sort_hardware_on = lambda ele: int(ele.split('/')[-1].split('-')[-1].split('.')[0])
+    sort_gridsize_on = lambda ele: int(ele.split('/')[-1].split('-')[1])
+    hardware_files.sort(key=sort_hardware_on)
+    gridsize_files.sort(key=sort_gridsize_on)
 
     hardware_data = []
     gridsize_data = []
