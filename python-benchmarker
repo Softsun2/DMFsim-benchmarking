@@ -29,7 +29,7 @@ bRun() {
   ( mv ../AStar.py ../AStar.py.bckp && cp AStar.py .. && echo "AStar.py patched." )
 
   # run benchmarking script & save the output
-  python3 Benchmark.py all python3 ../Tutorial.py > benchmarker-logs
+  python3 -u Benchmark.py all python3 ../Tutorial.py | tee benchmarker-logs.txt
 }
 
 bRestore() {
