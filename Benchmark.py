@@ -3,11 +3,15 @@ import os               # forking and waiting
 import subprocess       # running cmds
 import time             # sleeping
 import pandas           # csv exporting
+import numpy            # nan value
 
 
 # benchmarking params
-g_rounds = 3
-g_gridsizes = [ i for i in range(500, 2100, 100) ]
+g_rounds = 1
+g_hardware_gridsize = 1000
+g_gridsize_machine = 'csel-kh1250-13'
+g_gridsizes = [ i for i in range(500, 1600, 100) ]
+assert g_hardware_gridsize in g_gridsizes
 g_ping_interval = 0.07       # in seconds
 # something for number of chemistry sites
 
@@ -36,9 +40,6 @@ def print_usage(opt):
     'Usage: python3 Benchmark.py [option] [cmd]\n'+ \
     '   options:\n'+ \
     '       all  - benchmark all options\n'+ \
-    '       time - benchmark runtime\n'+ \
-    '       mem  - profile memory usage\n'+ \
-    '       cpu  - profile cpu usage\n'+ \
     '       help - display usage'
     print(usage)
 
@@ -150,66 +151,243 @@ def write_pings(pings, target_metrics, path):
 
 
 # ================ Profiling ================ 
-def profile(cmd, process_name, target_metrics):
+def profile_data(cmd, process_name, target_metrics):
     print(f'\nProfiling \'{cmd}\'.\n')
     # get user name of user running the script
-    user_string = subprocess.run('hostname', capture_output=True).stdout.decode().strip()
+    host_string = subprocess.run('hostname', capture_output=True).stdout.decode().strip()
     # user_string = "big-gs"
     # create user dir if necessary
-    subprocess.run(f'test -d raw-data/{user_string} || mkdir raw-data/{user_string}', shell=True)
-    
+    subprocess.run(f'test -d raw-data/{host_string} || mkdir -p raw-data/{host_string}', shell=True)
+
     # independent var: system hardware
-    # for i in range(g_rounds):
-    #     print(f'[PROFILING] --> variable: system hardware (1/2), round: {i+1} ({i+1}/{g_rounds})')
+    for i in range(g_rounds):
+        print(f'[PROFILING] --> variable: system hardware (1/2), round: {i+1} ({i+1}/{g_rounds})')
 
-    #     pid = os.fork()                                 # fork process
+        pid = os.fork()                                 # fork process
 
-    #     if pid == 0:                                    # child process
-    #         pings = get_pings(                          # ping active simulation
-    #             process_name,
-    #             target_metrics
-    #         )
-    #         write_pings(                                # export data
-    #             pings,
-    #             target_metrics,
-    #             f'raw-data/{user_string}/hw-{i}.csv'
-    #         )
-    #         sys.exit(0)                                 # kill child (⌣́_⌣̀)
+        if pid == 0:                                    # child process
+            pings = get_pings(                          # ping active simulation
+                process_name,
+                target_metrics
+            )
+            write_pings(                                # export data
+                pings,
+                target_metrics,
+                f'raw-data/{host_string}/hw-{i}.csv'
+            )
+            sys.exit(0)                                 # kill child (⌣́_⌣̀)
 
-    #     else:                                           # parent process
-    #         subprocess.run(                             # run simulation
-    #             f'sh -c \'exec -a {process_name} {cmd}\'',
-    #             shell=True
-    #         )
-    #         os.wait()                                   # wait for child process to complete
+        else:                                           # parent process
+            subprocess.run(                             # run simulation
+                f'sh -c \'exec -a {process_name} {cmd}\'',
+                shell=True
+            )
+            os.wait()                                   # wait for child process to complete
             
     # independent var: gridsize
-    for i, gridsize in enumerate(g_gridsizes):
-        for j in range(g_rounds):
-            print(f'[PROFILING] --> variable: gridsize (2/2), gridsize: {gridsize} ({i+1}/{len(g_gridsizes)}), round: {j+1} ({j+1}/{g_rounds})')
+    if host_string == g_gridsize_machine:
+        for i, gridsize in enumerate(g_gridsizes):
+            for j in range(g_rounds):
+                print(f'[PROFILING] --> variable: gridsize (2/2), gridsize: {gridsize} ({i+1}/{len(g_gridsizes)}), round: {j+1} ({j+1}/{g_rounds})')
 
-            pid = os.fork()                                 # fork process
+                pid = os.fork()                                 # fork process
 
-            if pid == 0:                                    # child process
-                pings = get_pings(                          # ping active simulation
-                    process_name,
-                    target_metrics
-                )
-                write_pings(                                # export data
-                    pings,
-                    target_metrics,
-                    f'raw-data/{user_string}/gs-{gridsize}-{j}.csv'
-                )
-                sys.exit(0)                                 # kill child (⌣́_⌣̀)
+                if pid == 0:                                    # child process
+                    pings = get_pings(                          # ping active simulation
+                        process_name,
+                        target_metrics
+                    )
+                    write_pings(                                # export data
+                        pings,
+                        target_metrics,
+                        f'raw-data/{host_string}/gs-{gridsize}-{j}.csv'
+                    )
+                    sys.exit(0)                                 # kill child (⌣́_⌣̀)
 
-            else:                                           # parent process
-                subprocess.run(                             # run simulation
-                    f'sh -c \'exec -a {process_name} {cmd} {gridsize}\'',
-                     shell=True
-                )
-                os.wait()                                   # wait for child process to complete
+                else:                                           # parent process
+                    subprocess.run(                             # run simulation
+                        f'sh -c \'exec -a {process_name} {cmd} {gridsize}\'',
+                        shell=True
+                    )
+                    os.wait()                                   # wait for child process to complete
 
     # independent var: chemistry sites
+
+
+# ================ FORMATTING ================ 
+def format_data(hardware_gridsize, gridsize_machine, gridsizes):
+    data_path_prefix = 'raw-data/'
+    hardware_files = []
+    gridsize_files = []
+    hardware_machines = []
+
+    for machine_dir in os.listdir(data_path_prefix):
+        hardware_machines.append(machine_dir)
+        machine_path = os.path.join(data_path_prefix, machine_dir)
+        if os.path.isdir(machine_path):
+            for machine_file in os.listdir(machine_path):
+                # append hardware files
+                if int(machine_file.split('-')[1]) == hardware_gridsize:
+                    hardware_files.append(os.path.join(machine_path, machine_file))
+
+                # append gridsize files
+                if machine_dir == gridsize_machine:
+                    gridsize_files.append(os.path.join(machine_path, machine_file))
+
+    sort_on = lambda ele: int(ele.split('/')[-1].split('-')[1])
+    hardware_files.sort(key=sort_on)
+    gridsize_files.sort(key=sort_on)
+
+    hardware_data = []
+    gridsize_data = []
+
+    for hardware_file in hardware_files:
+        machine_data = pandas.read_csv(hardware_file).to_dict('records')    # get a list of machine data records
+        machine_data.insert(0, {'col1': hardware_file.split('/')[1]})       # insert machine name as header
+        hardware_data.append(machine_data)
+
+    for gridsize_file in gridsize_files:
+        data = pandas.read_csv(gridsize_file).to_dict('records')    # get a list of gridsize data records
+        data.insert(0, {'col1': int(gridsize_file.split('/')[-1].split('-')[1])})      # insert gridsize as header
+        gridsize_data.append(data)
+    
+    host_string = subprocess.run('hostname', capture_output=True).stdout.decode().strip()
+    subprocess.run(f'test -d formatted-data/{host_string} || mkdir -p formatted-data/{host_string}', shell=True)
+
+    format_hardware_data(host_string, hardware_gridsize, hardware_machines, hardware_data)
+    if host_string == g_gridsize_machine:
+        format_gridsize_data(host_string, gridsize_machine, gridsizes, gridsize_data)
+
+def format_hardware_data(host_string, hardware_gridsize, hardware_machines, hardware_data):
+
+    hardware_v_runtime = [(f'hardware vs. runtime ({hardware_gridsize})', )]
+    hardware_v_mem = [(f'hardware vs. memory ({hardware_gridsize})', )]
+    hardware_v_peak_mem = [(f'hardware vs. peak memory consumption ({hardware_gridsize})', )]
+    hardware_v_avg_cpu = [(f'hardware vs. avg cpu usage ({hardware_gridsize})', )]
+
+    # hardware vs. runtime
+    hardware_v_runtime.append(tuple(hardware_machines))
+    runtimes = []
+    for data in hardware_data:
+        runtimes.append(data[1]['total-runtime'])
+    hardware_v_runtime.append(tuple(runtimes))
+    pandas.DataFrame(hardware_v_runtime).to_csv(
+        f'formatted-data/{host_string}/hardware_v_runtime.csv',
+        index=False,
+        header=False
+    )
+
+    # hardware vs. mem
+    hardware_v_mem.append(tuple(['time+'] + hardware_machines))
+    mems = []
+    for i, data in enumerate(hardware_data):
+        for row in data[1:]:
+            nan_list = [numpy.nan for i in range(len(hardware_machines)+1)]
+            nan_list[0] = row['time+']
+            nan_list[i+1] = row['res']
+            mems.append(tuple(nan_list))
+    mems.sort(key=lambda ele: ele[0])
+    hardware_v_mem += mems
+    pandas.DataFrame(hardware_v_mem).to_csv(
+        f'formatted-data/{host_string}/hardware_v_mem.csv',
+        index=False,
+        header=False
+    )
+    
+    # hardware vs. peak mem
+    hardware_v_peak_mem.append(tuple(hardware_machines))
+    peak_mems = []
+    for data in hardware_data:
+        mems = []
+        for row in data[1:]:            # skip header
+            mems.append(row['res'])
+        peak_mems.append(max(mems))
+    hardware_v_peak_mem.append(tuple(peak_mems))
+    pandas.DataFrame(hardware_v_peak_mem).to_csv(
+        f'formatted-data/{host_string}/hardware_v_peak_mem.csv',
+        index=False,
+        header=False
+    )
+
+    # hardware vs. avg cpu
+    hardware_v_avg_cpu.append(tuple(hardware_machines))
+    avg_cpus = []
+    for data in hardware_data:
+        cpus = []
+        for row in data[1:]:            # skip header
+            cpus.append(row['%cpu'])
+        avg_cpus.append(sum(cpus)/len(cpus))
+    hardware_v_avg_cpu.append(tuple(avg_cpus))
+    pandas.DataFrame(hardware_v_avg_cpu).to_csv(
+        f'formatted-data/{host_string}/hardware_v_avg_cpu.csv',
+        index=False,
+        header=False
+    )
+
+def format_gridsize_data(host_string, gridsize_machine, gridsizes, gridsize_data):
+    gridsize_v_runtime = [(f'gridsize vs. runtime ({gridsize_machine})', )]
+    gridsize_v_mem = [(f'gridsize vs. memory ({gridsize_machine})', )]
+    gridsize_v_peak_mem = [(f'gridsize vs. peak memory consumption ({gridsize_machine})', )]
+    gridsize_v_avg_cpu = [(f'gridsize vs. avg cpu usage ({gridsize_machine})', )]
+
+    # gridsize vs. runtime
+    gridsize_v_runtime.append(tuple(gridsizes))
+    runtimes = []
+    for data in gridsize_data:
+        runtimes.append(data[1]['total-runtime'])
+    gridsize_v_runtime.append(tuple(runtimes))
+    pandas.DataFrame(gridsize_v_runtime).to_csv(
+        f'formatted-data/{host_string}/gridsize_v_runtime.csv',
+        index=False,
+        header=False
+    )
+
+    # gridsize vs. mem
+    gridsize_v_mem.append(tuple(['time+'] + [ f'gs={gs}' for gs in gridsizes ]))
+    mems = []
+    for i, data in enumerate(gridsize_data):
+        for row in data[1:]:
+            nan_list = [numpy.nan for i in range(len(gridsizes)+1)]
+            nan_list[0] = row['time+']
+            nan_list[i+1] = row['res']
+            mems.append(tuple(nan_list))
+    mems.sort(key=lambda ele: ele[0])
+    gridsize_v_mem += mems
+    pandas.DataFrame(gridsize_v_mem).to_csv(
+        f'formatted-data/{host_string}/gridsize_v_mem.csv',
+        index=False,
+        header=False
+    )
+    
+    # gridsize vs. peak mem
+    gridsize_v_peak_mem.append(tuple(gridsizes))
+    peak_mems = []
+    for data in gridsize_data:
+        mems = []
+        for row in data[1:]:            # skip header
+            mems.append(row['res'])
+        peak_mems.append(max(mems))
+    gridsize_v_peak_mem.append(tuple(peak_mems))
+    pandas.DataFrame(gridsize_v_peak_mem).to_csv(
+        f'formatted-data/{host_string}/gridsize_v_peak_mem.csv',
+        index=False,
+        header=False
+    )
+
+    # gridsize vs. avg cpu
+    gridsize_v_avg_cpu.append(tuple(gridsizes))
+    avg_cpus = []
+    for data in gridsize_data:
+        cpus = []
+        for row in data[1:]:            # skip header
+            cpus.append(row['%cpu'])
+        avg_cpus.append(sum(cpus)/len(cpus))
+    gridsize_v_avg_cpu.append(tuple(avg_cpus))
+    pandas.DataFrame(gridsize_v_avg_cpu).to_csv(
+        f'formatted-data/{host_string}/gridsize_v_avg_cpu.csv',
+        index=False,
+        header=False
+    )
 
 
 # ================ MAIN ================ 
@@ -226,20 +404,15 @@ def main(argv):
     process_name = 'dmf-sim'
 
     # option handling
-    if option == 'time':
-        profile(cmd, process_name, ['time+'])
-    elif option == 'mem':
-        profile(cmd, process_name, ['time+', 'res'])
-    elif option == 'cpu':
-        profile(cmd, process_name, ['time+', '%cpu'])
-    elif option == 'all':
-        profile(cmd, process_name, ['time+', 'res', '%cpu'])
+    if option == 'all':
+        profile_data(cmd, process_name, ['time+', 'res', '%cpu'])
+        format_data(g_hardware_gridsize, g_gridsize_machine, g_gridsizes)
     elif option == 'help':
         print_usage(None)
     else:
         print_usage(option)
     
-    print('\nProfiling done. See \'raw-data\' for output.\n')
+    print('\nProfiling done. See \'raw-data\' for raw output. See \'formatted-data\' for formatted output.\n')
 
 
 if __name__ == '__main__':      # entry point
