@@ -8,10 +8,10 @@ import numpy            # nan value
 
 # benchmarking params
 g_rounds = 1
-g_hardware_gridsize = 1000
+g_hardware_gridsize = 40
 g_gridsize_machine = 'csel-kh1250-13'
 g_gridsizes = [ i for i in range(500, 1600, 100) ]
-assert g_hardware_gridsize in g_gridsizes
+# assert g_hardware_gridsize in g_gridsizes
 g_ping_interval = 0.07       # in seconds
 # something for number of chemistry sites
 
@@ -62,6 +62,8 @@ def get_pings(process_name, target_metrics):
                 shell=True,                         # use a subshell
                 capture_output=True                 # record pid if found
             )
+            print("waiting", completed_process.returncode)
+            print("pid", completed_process.stdout.decode().strip())
             if completed_process.returncode == 0:
                 # get pid of simulation process
                 sim_pid = completed_process.stdout.decode().strip()
@@ -74,6 +76,7 @@ def get_pings(process_name, target_metrics):
                 pings.append(ping)
             # check if the simulation process stopped running
             completed_process = subprocess.run(f'pidof {process_name} > /dev/null', shell=True)
+            print("running", completed_process.returncode)
             if completed_process.returncode != 0:
                 sim_state = simulation_states[2]
         
@@ -179,7 +182,7 @@ def profile_data(cmd, process_name, target_metrics):
 
         else:                                           # parent process
             subprocess.run(                             # run simulation
-                f'sh -c \'exec -a {process_name} {cmd}\'',
+                f'sh -c \'exec -a {process_name} {cmd} {g_hardware_gridsize}\'',
                 shell=True
             )
             os.wait()                                   # wait for child process to complete
@@ -212,6 +215,7 @@ def profile_data(cmd, process_name, target_metrics):
                     os.wait()                                   # wait for child process to complete
 
     # independent var: chemistry sites
+    pass
 
 
 # ================ FORMATTING ================ 
