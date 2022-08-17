@@ -227,7 +227,7 @@ def format_data(hardware_gridsize, gridsize_machine, gridsizes):
         if os.path.isdir(machine_path):
             for machine_file in os.listdir(machine_path):
                 # append hardware files
-                if int(machine_file.split('-')[1]) == hardware_gridsize:
+                if 'hw' in machine_file:
                     hardware_files.append(os.path.join(machine_path, machine_file))
 
                 # append gridsize files
