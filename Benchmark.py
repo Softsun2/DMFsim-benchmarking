@@ -8,7 +8,7 @@ import numpy            # nan value
 
 # benchmarking params
 g_rounds = 1
-g_hardware_gridsize = 40
+g_hardware_gridsize = 1000
 g_gridsize_machine = 'csel-kh1250-13'
 g_gridsizes = [ i for i in range(500, 1600, 100) ]
 # assert g_hardware_gridsize in g_gridsizes
@@ -45,7 +45,7 @@ def print_usage(opt):
 
 
 # ================ PINGING ================ 
-def get_pings(process_name, target_metrics):
+def get_pings(cmd, gridsize, target_metrics):
     # organizing simple state machine
     simulation_states = ['waiting', 'running', 'done']
     sim_state = simulation_states[0]
@@ -58,15 +58,17 @@ def get_pings(process_name, target_metrics):
         if sim_state == 'waiting':
             # check if the simulation process started running
             completed_process = subprocess.run(
-                f'pidof {process_name}',            # lookup the processes id
+                f'pgrep -a python3',            # lookup the processes id
                 shell=True,                         # use a subshell
                 capture_output=True                 # record pid if found
             )
-            print("waiting", completed_process.returncode)
-            print("pid", completed_process.stdout.decode().strip())
-            if completed_process.returncode == 0:
+            if f'{cmd} {gridsize}' in completed_process.stdout.decode().strip():
                 # get pid of simulation process
-                sim_pid = completed_process.stdout.decode().strip()
+                lines = completed_process.stdout.decode().strip().split('\n')
+                sim_pid = ''
+                for line in lines:
+                    if cmd in line:
+                        sim_pid = line.split(' ')[0]
                 # set sim_state to running
                 sim_state = simulation_states[1]
 
@@ -75,9 +77,8 @@ def get_pings(process_name, target_metrics):
             if ping:    # if ping succeeds add it to the list of pings
                 pings.append(ping)
             # check if the simulation process stopped running
-            completed_process = subprocess.run(f'pidof {process_name} > /dev/null', shell=True)
-            print("running", completed_process.returncode)
-            if completed_process.returncode != 0:
+            completed_process = subprocess.run(f'pgrep -a python3', shell=True, capture_output=True)
+            if f'{cmd} {gridsize}' not in completed_process.stdout.decode().strip():
                 sim_state = simulation_states[2]
         
         time.sleep(g_ping_interval)     # don't spam pings
@@ -170,7 +171,8 @@ def profile_data(cmd, process_name, target_metrics):
 
         if pid == 0:                                    # child process
             pings = get_pings(                          # ping active simulation
-                process_name,
+                cmd,
+                g_hardware_gridsize,
                 target_metrics
             )
             write_pings(                                # export data
@@ -182,7 +184,7 @@ def profile_data(cmd, process_name, target_metrics):
 
         else:                                           # parent process
             subprocess.run(                             # run simulation
-                f'sh -c \'exec -a {process_name} {cmd} {g_hardware_gridsize}\'',
+                f'{cmd} {g_hardware_gridsize}',
                 shell=True
             )
             os.wait()                                   # wait for child process to complete
@@ -198,6 +200,7 @@ def profile_data(cmd, process_name, target_metrics):
                 if pid == 0:                                    # child process
                     pings = get_pings(                          # ping active simulation
                         process_name,
+                        gridsize,
                         target_metrics
                     )
                     write_pings(                                # export data
@@ -235,7 +238,7 @@ def format_data(hardware_gridsize, gridsize_machine, gridsizes):
                     hardware_files.append(os.path.join(machine_path, machine_file))
 
                 # append gridsize files
-                if machine_dir == gridsize_machine:
+                elif machine_dir == gridsize_machine:
                     gridsize_files.append(os.path.join(machine_path, machine_file))
 
     sort_hardware_on = lambda ele: int(ele.split('/')[-1].split('-')[-1].split('.')[0])
@@ -410,7 +413,7 @@ def main(argv):
 
     # option handling
     if option == 'all':
-        profile_data(cmd, process_name, ['time+', 'res', '%cpu'])
+        # profile_data(cmd, process_name, ['time+', 'res', '%cpu'])
         format_data(g_hardware_gridsize, g_gridsize_machine, g_gridsizes)
     elif option == 'help':
         print_usage(None)
