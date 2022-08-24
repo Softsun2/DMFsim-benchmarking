@@ -5,11 +5,11 @@ The current independent variables are system hardware, gridsize, and potentially
 
 
 ## [The Script](Benchmark.py)
-The script obtains data with [top](https://man7.org/linux/man-pages/man1/top.1.html) and exports that data to a spreadsheet readable format (csv). Message me if there are questions or issues with the script.
+The script obtains data with [top](https://man7.org/linux/man-pages/man1/top.1.html) and exports that data to a spreadsheet readable format (csv). By default the script profiles the simulation at a gridsize of 1000. Only the target gridsize vs. metrics machine will profile the simulation with the full range of gridsizes. Message me if there are questions or issues with the script.
 
 
 ### Usage
-The following assumes that the benchmarking repo is located at the top level of the `DMFsim` repo.
+The following assumes that the benchmarking repo is located at the top level of the `DMFsim` repo. You should be able to obtain the desired data overnight if you run the script on all the machines at the same time. I used multiple ssh connections to run the script on other machines.
 
 #### Parameters
 At the top of [Benchmark.py](Benchmark.py) you can set the constant variables for the trials, the number of rounds of benchmarking, and range of grid sizes to benchmark against.
