@@ -6,6 +6,7 @@
 test -d ../../DMFsim || { echo DMFsim is not the parent dir! && exit 1; }
 
 TOPRC_PATH="$HOME"/.config/procps/toprc
+PY_DIR="patched-python-files"
 
 bRun() {
   # verify/install config dir
@@ -17,16 +18,16 @@ bRun() {
   ( ( test -f "$TOPRC_PATH" && mv "$TOPRC_PATH" "$TOPRC_PATH".bckp ) ; cp toprc "$TOPRC_PATH" && echo "toprc installed." )
 
   # verify/install Tutorial.py
-  ( diff Tutorial.py ../Tutorial.py >/dev/null && echo "Tutorial.py verified." ) ||
-  ( mv ../Tutorial.py ../Tutorial.py.bckp && cp Tutorial.py .. && echo "Tutorial.py patched." )
+  ( diff "$PY_DIR"/Tutorial.py ../Tutorial.py >/dev/null && echo "Tutorial.py verified." ) ||
+  ( mv ../Tutorial.py ../Tutorial.py.bckp && cp "$PY_DIR"/Tutorial.py .. && echo "Tutorial.py patched." )
   
   # verify/install Scheduler.py
-  ( diff Scheduler.py ../Scheduler.py >/dev/null && echo "Scheduler.py verified." ) ||
-  ( mv ../Scheduler.py ../Scheduler.py.bckp && cp Scheduler.py .. && echo "Scheduler.py patched." )
+  ( diff "$PY_DIR"/Scheduler.py ../Scheduler.py >/dev/null && echo "Scheduler.py verified." ) ||
+  ( mv ../Scheduler.py ../Scheduler.py.bckp && cp "$PY_DIR"/Scheduler.py .. && echo "Scheduler.py patched." )
   
   # verify/install AStar.py
-  ( diff AStar.py ../AStar.py >/dev/null && echo "AStar.py verified." ) ||
-  ( mv ../AStar.py ../AStar.py.bckp && cp AStar.py .. && echo "AStar.py patched." )
+  ( diff "$PY_DIR"/AStar.py ../AStar.py >/dev/null && echo "AStar.py verified." ) ||
+  ( mv ../AStar.py ../AStar.py.bckp && cp "$PY_DIR"/AStar.py .. && echo "AStar.py patched." )
 
   # run benchmarking script & save the output
   python3 -u Benchmark.py all python3 ../Tutorial.py | tee benchmarker-logs.txt
