@@ -6,17 +6,32 @@ import pandas           # csv exporting
 import numpy            # nan value
 
 
-# benchmarking params
+# ================ PARAMETERS ================ 
+""" The number of rounds to run the simulation for a given independent variable.
+This MUST be ONE in order for the formatting to work, otherwise you'll have
+format dozens of csv files by hand or write your own script to do so. """
 g_rounds = 1
+
+""" The constant gridsize at which to benchmark hardware against the
+dependent variables. Should be 1000 unless Seagate suggests otherwise. """
 g_hardware_gridsize = 1000
+
+""" The constant hardware (machine) on which to benchmark gridsize against
+the dependent variables. I'd recommend using the best machine you can access
+to speed up the scripts runtime. """
 g_gridsize_machine = 'csel-kh1250-13'
+
+""" The gridsizes at which to benchmark against the dependent variables. Make
+sure this includes 1000 unless Seagate suggests otherwise. """
 g_gridsizes = [ i for i in range(500, 1600, 100) ]
-# assert g_hardware_gridsize in g_gridsizes
+
+""" The interval at which data points are obtained. Every g_ping_interval
+seconds a new data point is pinged. """
 g_ping_interval = 0.07       # in seconds
 # something for number of chemistry sites
 
-# possible target metrics, the ordering depends on the user's top configuration
-# these indexes will not be accurate if the given toprc is not used!
+""" possible target metrics, the ordering depends on the user's top configuration
+these indexes will not be accurate if the given toprc is not used! """
 g_targets = {   # see https://man7.org/linux/man-pages/man1/top.1.html for explanation
     'pid': 1,
     'virt': 2,
@@ -57,13 +72,9 @@ def get_pings(cmd, gridsize, target_metrics):
 
         if sim_state == 'waiting':
             # check if the simulation process started running
-            completed_process = subprocess.run(
-                f'pgrep -a python3',            # lookup the processes id
-                shell=True,                         # use a subshell
-                capture_output=True                 # record pid if found
-            )
+            completed_process = subprocess.run(f'pgrep -a python3', shell=True, capture_output=True)
             if f'{cmd} {gridsize}' in completed_process.stdout.decode().strip():
-                # get pid of simulation process
+                # parse pgrep stdout for simulation's pid
                 lines = completed_process.stdout.decode().strip().split('\n')
                 sim_pid = ''
                 for line in lines:
@@ -155,7 +166,7 @@ def write_pings(pings, target_metrics, path):
 
 
 # ================ Profiling ================ 
-def profile_data(cmd, process_name, target_metrics):
+def profile_data(cmd, target_metrics):
     print(f'\nProfiling \'{cmd}\'.\n')
     # get user name of user running the script
     host_string = subprocess.run('hostname', capture_output=True).stdout.decode().strip()
@@ -199,8 +210,8 @@ def profile_data(cmd, process_name, target_metrics):
 
                 if pid == 0:                                    # child process
                     pings = get_pings(                          # ping active simulation
-                        process_name,
-                        gridsize,
+                        cmd,
+                        g_hardware_gridsize,
                         target_metrics
                     )
                     write_pings(                                # export data
@@ -212,7 +223,7 @@ def profile_data(cmd, process_name, target_metrics):
 
                 else:                                           # parent process
                     subprocess.run(                             # run simulation
-                        f'sh -c \'exec -a {process_name} {cmd} {gridsize}\'',
+                        f'{cmd} {g_hardware_gridsize}',
                         shell=True
                     )
                     os.wait()                                   # wait for child process to complete
@@ -228,6 +239,7 @@ def format_data(hardware_gridsize, gridsize_machine, gridsizes):
     gridsize_files = []
     hardware_machines = []
 
+    # get paths of raw-data and append them to their corresponding list
     for machine_dir in os.listdir(data_path_prefix):
         hardware_machines.append(machine_dir)
         machine_path = os.path.join(data_path_prefix, machine_dir)
@@ -241,10 +253,11 @@ def format_data(hardware_gridsize, gridsize_machine, gridsizes):
                 elif machine_dir == gridsize_machine:
                     gridsize_files.append(os.path.join(machine_path, machine_file))
 
+    # sort hardware on round number
     sort_hardware_on = lambda ele: int(ele.split('/')[-1].split('-')[-1].split('.')[0])
     sort_gridsize_on = lambda ele: int(ele.split('/')[-1].split('-')[1])
-    hardware_files.sort(key=sort_hardware_on)
-    gridsize_files.sort(key=sort_gridsize_on)
+    hardware_files.sort(key=sort_hardware_on)   # sort hardware files on round
+    gridsize_files.sort(key=sort_gridsize_on)   # sort gridsize files on gridsize
 
     hardware_data = []
     gridsize_data = []
@@ -255,26 +268,30 @@ def format_data(hardware_gridsize, gridsize_machine, gridsizes):
         hardware_data.append(machine_data)
 
     for gridsize_file in gridsize_files:
-        data = pandas.read_csv(gridsize_file).to_dict('records')    # get a list of gridsize data records
+        data = pandas.read_csv(gridsize_file).to_dict('records')                       # get a list of gridsize data records
         data.insert(0, {'col1': int(gridsize_file.split('/')[-1].split('-')[1])})      # insert gridsize as header
         gridsize_data.append(data)
     
+    # get hostname of machine running script
     host_string = subprocess.run('hostname', capture_output=True).stdout.decode().strip()
+    # if target format directory doesn't exist, create it
     subprocess.run(f'test -d formatted-data/{host_string} || mkdir -p formatted-data/{host_string}', shell=True)
 
+    # always format harware data
     format_hardware_data(host_string, hardware_gridsize, hardware_machines, hardware_data)
+    # if the machine running the script is the constant variable for gridsize, format the gridsize data
     if host_string == g_gridsize_machine:
         format_gridsize_data(host_string, gridsize_machine, gridsizes, gridsize_data)
 
 def format_hardware_data(host_string, hardware_gridsize, hardware_machines, hardware_data):
-
+    # initialize data with headers
     hardware_v_runtime = [(f'hardware vs. runtime ({hardware_gridsize})', )]
     hardware_v_mem = [(f'hardware vs. memory ({hardware_gridsize})', )]
     hardware_v_peak_mem = [(f'hardware vs. peak memory consumption ({hardware_gridsize})', )]
     hardware_v_avg_cpu = [(f'hardware vs. avg cpu usage ({hardware_gridsize})', )]
 
     # hardware vs. runtime
-    hardware_v_runtime.append(tuple(hardware_machines))
+    hardware_v_runtime.append(tuple(hardware_machines))     # add label row
     runtimes = []
     for data in hardware_data:
         runtimes.append(data[1]['total-runtime'])
@@ -286,7 +303,9 @@ def format_hardware_data(host_string, hardware_gridsize, hardware_machines, hard
     )
 
     # hardware vs. mem
-    hardware_v_mem.append(tuple(['time+'] + hardware_machines))
+    hardware_v_mem.append(tuple(['time+'] + hardware_machines))     # add label row
+    # a list of rows of runtime memory usage pairs, the column of
+    # memory usage corresponds with it's associated label's column.
     mems = []
     for i, data in enumerate(hardware_data):
         for row in data[1:]:
@@ -294,7 +313,7 @@ def format_hardware_data(host_string, hardware_gridsize, hardware_machines, hard
             nan_list[0] = row['time+']
             nan_list[i+1] = row['res']
             mems.append(tuple(nan_list))
-    mems.sort(key=lambda ele: ele[0])
+    mems.sort(key=lambda ele: ele[0])       # sort all runtime-memory pairs by runtime
     hardware_v_mem += mems
     pandas.DataFrame(hardware_v_mem).to_csv(
         f'formatted-data/{host_string}/hardware_v_mem.csv',
@@ -303,7 +322,7 @@ def format_hardware_data(host_string, hardware_gridsize, hardware_machines, hard
     )
     
     # hardware vs. peak mem
-    hardware_v_peak_mem.append(tuple(hardware_machines))
+    hardware_v_peak_mem.append(tuple(hardware_machines))        # add label row
     peak_mems = []
     for data in hardware_data:
         mems = []
@@ -333,6 +352,7 @@ def format_hardware_data(host_string, hardware_gridsize, hardware_machines, hard
     )
 
 def format_gridsize_data(host_string, gridsize_machine, gridsizes, gridsize_data):
+    # initialize data with headers
     gridsize_v_runtime = [(f'gridsize vs. runtime ({gridsize_machine})', )]
     gridsize_v_mem = [(f'gridsize vs. memory ({gridsize_machine})', )]
     gridsize_v_peak_mem = [(f'gridsize vs. peak memory consumption ({gridsize_machine})', )]
@@ -352,6 +372,8 @@ def format_gridsize_data(host_string, gridsize_machine, gridsizes, gridsize_data
 
     # gridsize vs. mem
     gridsize_v_mem.append(tuple(['time+'] + [ f'gs={gs}' for gs in gridsizes ]))
+    # a list of rows of runtime memory usage pairs, the column of
+    # memory usage corresponds with it's associated label's column.
     mems = []
     for i, data in enumerate(gridsize_data):
         for row in data[1:]:
@@ -359,7 +381,7 @@ def format_gridsize_data(host_string, gridsize_machine, gridsizes, gridsize_data
             nan_list[0] = row['time+']
             nan_list[i+1] = row['res']
             mems.append(tuple(nan_list))
-    mems.sort(key=lambda ele: ele[0])
+    mems.sort(key=lambda ele: ele[0])       # sort all runtime-memory pairs by runtime
     gridsize_v_mem += mems
     pandas.DataFrame(gridsize_v_mem).to_csv(
         f'formatted-data/{host_string}/gridsize_v_mem.csv',
@@ -409,11 +431,10 @@ def main(argv):
         sys.exit(1)
 
     cmd = ' '.join(argv[2:])    # the string representing the command to benchmark
-    process_name = 'dmf-sim'
 
     # option handling
     if option == 'all':
-        # profile_data(cmd, process_name, ['time+', 'res', '%cpu'])
+        profile_data(cmd, ['time+', 'res', '%cpu'])
         format_data(g_hardware_gridsize, g_gridsize_machine, g_gridsizes)
     elif option == 'help':
         print_usage(None)

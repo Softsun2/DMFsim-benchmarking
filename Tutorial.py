@@ -123,7 +123,6 @@ gibson_limit = 3 #Assume 3 strands can be attached at a time, no more.
 # purify += [(), (), ()]   #Your entries here  
 # PCR += [(), (), ()]   #Your entries here  
 gibson = ['Gibson']
-print(coords)
 gibson += [coords.pop(random.randint(0, len(coords) - 1)) for i in range(num_gibson_sites)]
 purify = ['Purify']
 purify += [coords.pop(random.randint(0, len(coords) - 1)) for i in range(num_purify_sites)]
