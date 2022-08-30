@@ -36,6 +36,35 @@ from Lab import *
 import copy
 import random
 import sys
+import pandas
+import subprocess
+
+
+#########################################################
+#SECTION 0
+#Command line arg parsing
+#########################################################
+
+# Command line arg patch -- Softsun2
+def parse_benchmark_cmdline_args():
+    gridsize = 1000     # default gridsize
+    gene_length = 5     # default gene length 
+    host_string = None
+
+    for arg in sys.argv[1:]:
+        if "--gridsize=" in arg:
+            gridsize_string = arg.split("=")[1]
+            if gridsize_string.isdigit():
+                gridsize = int(gridsize_string)
+        elif "--gene-length=" in arg:
+            gene_length_string= arg.split("=")[1]
+            if gene_length_string.isdigit():
+                gene_length = int(gene_length_string)
+        elif "--host-string=" in arg:
+            host_string = arg.split("=")[1]
+
+    return gridsize, gene_length, host_string
+
 
 #########################################################
 #SECTION 1
@@ -99,15 +128,7 @@ random.seed(42)
 
 #Set the gene's symbol length (The number of symbols to be assembled into a single gene)
 #and the lab grid width
-datalen = 5
-
-# Command line arg patch -- Softsun2
-if len(sys.argv) == 2 and sys.argv[1].isdigit():
-    # pass width as only cmd line arg
-    width = int(sys.argv[1])
-else:
-    # if no valid cmd line arg default to 1000
-    width = 1000
+width, datalen, host_string = parse_benchmark_cmdline_args()
 
 #Get a list of the interior grid coordinates.
 #This is where the reaction sites *could* be placed.
@@ -202,4 +223,20 @@ sch = Scheduler(nodes, inst_locs, pull_data, lab)
 sch.Compile_Instructions(num=float('inf'), makeplot=False, wait_time=0.025, version=Int.version)
 
 #Check if it succeeded in generating the symbols you asked for.
-Check(lab, data);
+if Check(lab, data):
+    # export droplet count
+    total_droplets, max_droplet_count = lab.Get_Droplet_Counts()
+    congestion_history = lab.Get_Congestion_History()
+
+    gene_length_data_path = f'formatted-data/{host_string}/'
+
+    gene_length_data = [
+        ('total droplets', 'max droplets', 'max congestion'),
+        (total_droplets, max_droplet_count, max(congestion_history))
+    ]
+    pandas.DataFrame(tuple(gene_length_data)).to_csv(
+        f'{gene_length_data_path}gl-{datalen}-droplets.csv',
+        index=False,
+        header=False
+    )
+

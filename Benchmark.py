@@ -14,16 +14,24 @@ g_rounds = 1
 
 """ The constant gridsize at which to benchmark hardware against the
 dependent variables. Should be 1000 unless Seagate suggests otherwise. """
-g_hardware_gridsize = 1000
+g_const_gridsize = 40
 
 """ The constant hardware (machine) on which to benchmark gridsize against
 the dependent variables. I'd recommend using the best machine you can access
 to speed up the scripts runtime. """
-g_gridsize_machine = 'csel-kh1250-13'
+# TODO: change back
+g_const_machine = 'buffalo'
+
+""" The constant gene length at which to benchmark hardware against the
+dependent variables. Should be 5 unless Seagate suggests otherwise. """
+g_const_gene_length = 5
 
 """ The gridsizes at which to benchmark against the dependent variables. Make
 sure this includes 1000 unless Seagate suggests otherwise. """
-g_gridsizes = [ i for i in range(500, 1600, 100) ]
+g_gridsizes = list(range(500, 1600, 100))
+
+""" The gene lengths at which to benchmark against the dependent variables. """
+g_gene_lengths = list(range(2, 9))
 
 """ The interval at which data points are obtained. Every g_ping_interval
 seconds a new data point is pinged. """
@@ -51,16 +59,20 @@ g_memory_targets = ['virt', 'res', 'shr', 'swap', 'data']
 def print_usage(opt):
     if opt:
         print(f'Error: unknown option \'{opt}\'')
-    usage = \
-    'Usage: python3 Benchmark.py [option] [cmd]\n'+ \
-    '   options:\n'+ \
-    '       all  - benchmark all options\n'+ \
-    '       help - display usage'
+    usage = (
+    'Usage: python3 Benchmark.py [option] [cmd]\n'
+    '   options:\n'
+    '       all         - benchmark all options\n'
+    '       hardware    - benchmark hardware only\n'
+    '       gridsize    - benchmark gridsize only\n'
+    '       gene-length - benchmark gene length only\n'
+    '       help        - display usage'
+    )
     print(usage)
 
 
 # ================ PINGING ================ 
-def get_pings(cmd, gridsize, target_metrics):
+def get_pings(full_cmd, target_metrics):
     # organizing simple state machine
     simulation_states = ['waiting', 'running', 'done']
     sim_state = simulation_states[0]
@@ -73,12 +85,12 @@ def get_pings(cmd, gridsize, target_metrics):
         if sim_state == 'waiting':
             # check if the simulation process started running
             completed_process = subprocess.run(f'pgrep -a python3', shell=True, capture_output=True)
-            if f'{cmd} {gridsize}' in completed_process.stdout.decode().strip():
+            if f'{full_cmd}' in completed_process.stdout.decode().strip():
                 # parse pgrep stdout for simulation's pid
                 lines = completed_process.stdout.decode().strip().split('\n')
                 sim_pid = ''
                 for line in lines:
-                    if cmd in line:
+                    if full_cmd in line:
                         sim_pid = line.split(' ')[0]
                 # set sim_state to running
                 sim_state = simulation_states[1]
@@ -89,7 +101,7 @@ def get_pings(cmd, gridsize, target_metrics):
                 pings.append(ping)
             # check if the simulation process stopped running
             completed_process = subprocess.run(f'pgrep -a python3', shell=True, capture_output=True)
-            if f'{cmd} {gridsize}' not in completed_process.stdout.decode().strip():
+            if f'{full_cmd}' not in completed_process.stdout.decode().strip():
                 sim_state = simulation_states[2]
         
         time.sleep(g_ping_interval)     # don't spam pings
@@ -166,26 +178,20 @@ def write_pings(pings, target_metrics, path):
 
 
 # ================ Profiling ================ 
-def profile_data(cmd, target_metrics):
-    print(f'\nProfiling \'{cmd}\'.\n')
-    # get user name of user running the script
-    host_string = subprocess.run('hostname', capture_output=True).stdout.decode().strip()
-    # user_string = "big-gs"
-    # create user dir if necessary
-    subprocess.run(f'test -d raw-data/{host_string} || mkdir -p raw-data/{host_string}', shell=True)
-
-    # independent var: system hardware
+def profile_hardware(cmd, target_metrics, host_string):
     for i in range(g_rounds):
-        print(f'[PROFILING] --> variable: system hardware (1/2), round: {i+1} ({i+1}/{g_rounds})')
+        print(f'[PROFILING] --> variable: system hardware (1/3), round: {i+1} ({i+1}/{g_rounds})')
 
         pid = os.fork()                                 # fork process
+        full_cmd = (
+            f'{cmd} '
+            f'--gridsize={g_const_gridsize} '
+            f'--gene-length={g_const_gene_length}'
+        )
 
         if pid == 0:                                    # child process
-            pings = get_pings(                          # ping active simulation
-                cmd,
-                g_hardware_gridsize,
-                target_metrics
-            )
+            # ping active simulation
+            pings = get_pings(full_cmd, target_metrics)
             write_pings(                                # export data
                 pings,
                 target_metrics,
@@ -194,26 +200,28 @@ def profile_data(cmd, target_metrics):
             sys.exit(0)                                 # kill child (⌣́_⌣̀)
 
         else:                                           # parent process
-            subprocess.run(                             # run simulation
-                f'{cmd} {g_hardware_gridsize}',
-                shell=True
-            )
+            # run simulation
+            subprocess.run(full_cmd, shell=True)
             os.wait()                                   # wait for child process to complete
-            
-    # independent var: gridsize
-    if host_string == g_gridsize_machine:
+
+def profile_gridsize(cmd, target_metrics, host_string):
+    # only profile on desired constant machine
+    if host_string == g_const_machine:
         for i, gridsize in enumerate(g_gridsizes):
             for j in range(g_rounds):
-                print(f'[PROFILING] --> variable: gridsize (2/2), gridsize: {gridsize} ({i+1}/{len(g_gridsizes)}), round: {j+1} ({j+1}/{g_rounds})')
+                # FIXME:
+                print(f'[PROFILING] --> variable: gridsize (2/3), gridsize: {gridsize} ({i+1}/{len(g_gridsizes)}), round: {j+1} ({j+1}/{g_rounds})')
 
                 pid = os.fork()                                 # fork process
+                full_cmd = (
+                    f'{cmd} '
+                    f'--gridsize={gridsize} '
+                    f'--gene-length={g_const_gene_length}'
+                )
 
                 if pid == 0:                                    # child process
-                    pings = get_pings(                          # ping active simulation
-                        cmd,
-                        g_hardware_gridsize,
-                        target_metrics
-                    )
+                    # ping active simulation
+                    pings = get_pings(full_cmd, target_metrics)
                     write_pings(                                # export data
                         pings,
                         target_metrics,
@@ -222,14 +230,40 @@ def profile_data(cmd, target_metrics):
                     sys.exit(0)                                 # kill child (⌣́_⌣̀)
 
                 else:                                           # parent process
-                    subprocess.run(                             # run simulation
-                        f'{cmd} {g_hardware_gridsize}',
-                        shell=True
-                    )
+                    # run simulation
+                    subprocess.run(full_cmd, shell=True)
                     os.wait()                                   # wait for child process to complete
 
-    # independent var: chemistry sites
-    pass
+def profile_gene_length(cmd, target_metrics, host_string):
+    # only profile on desired constant machine
+    if host_string == g_const_machine:
+        for i, gene_length in enumerate(g_gene_lengths):
+            for j in range(g_rounds):
+                # FIXME:
+                print(f'[PROFILING] --> variable: gene length (3/3), gene length: {gene_length} ({i+1}/{len(g_gene_lengths)}), round: {j+1} ({j+1}/{g_rounds})')
+
+                pid = os.fork()                                 # fork process
+                full_cmd = (
+                    f'{cmd} '
+                    f'--host-string={host_string} '
+                    f'--gridsize={g_const_gridsize} '
+                    f'--gene-length={gene_length}'
+                )
+
+                if pid == 0:                                    # child process
+                    # ping active simulation
+                    pings = get_pings(full_cmd, target_metrics)
+                    write_pings(                                # export data
+                        pings,
+                        target_metrics,
+                        f'raw-data/{host_string}/gl-{gene_length}-{j}.csv'
+                    )
+                    sys.exit(0)                                 # kill child (⌣́_⌣̀)
+
+                else:                                           # parent process
+                    # run simulation
+                    subprocess.run(full_cmd, shell=True)
+                    os.wait()                                   # wait for child process to complete
 
 
 # ================ FORMATTING ================ 
@@ -280,7 +314,7 @@ def format_data(hardware_gridsize, gridsize_machine, gridsizes):
     # always format harware data
     format_hardware_data(host_string, hardware_gridsize, hardware_machines, hardware_data)
     # if the machine running the script is the constant variable for gridsize, format the gridsize data
-    if host_string == g_gridsize_machine:
+    if host_string == g_const_machine:
         format_gridsize_data(host_string, gridsize_machine, gridsizes, gridsize_data)
 
 def format_hardware_data(host_string, hardware_gridsize, hardware_machines, hardware_data):
@@ -419,6 +453,74 @@ def format_gridsize_data(host_string, gridsize_machine, gridsizes, gridsize_data
         header=False
     )
 
+def format_gene_length_data(host_string, gridsize_machine, gridsizes, gridsize_data):
+    # initialize data with headers
+    gridsize_v_runtime = [(f'gridsize vs. runtime ({gridsize_machine})', )]
+    gridsize_v_mem = [(f'gridsize vs. memory ({gridsize_machine})', )]
+    gridsize_v_peak_mem = [(f'gridsize vs. peak memory consumption ({gridsize_machine})', )]
+    gridsize_v_avg_cpu = [(f'gridsize vs. avg cpu usage ({gridsize_machine})', )]
+
+    # gridsize vs. runtime
+    gridsize_v_runtime.append(tuple(gridsizes))
+    runtimes = []
+    for data in gridsize_data:
+        runtimes.append(data[1]['total-runtime'])
+    gridsize_v_runtime.append(tuple(runtimes))
+    pandas.DataFrame(gridsize_v_runtime).to_csv(
+        f'formatted-data/{host_string}/gridsize_v_runtime.csv',
+        index=False,
+        header=False
+    )
+
+    # gridsize vs. mem
+    gridsize_v_mem.append(tuple(['time+'] + [ f'gs={gs}' for gs in gridsizes ]))
+    # a list of rows of runtime memory usage pairs, the column of
+    # memory usage corresponds with it's associated label's column.
+    mems = []
+    for i, data in enumerate(gridsize_data):
+        for row in data[1:]:
+            nan_list = [numpy.nan for i in range(len(gridsizes)+1)]
+            nan_list[0] = row['time+']
+            nan_list[i+1] = row['res']
+            mems.append(tuple(nan_list))
+    mems.sort(key=lambda ele: ele[0])       # sort all runtime-memory pairs by runtime
+    gridsize_v_mem += mems
+    pandas.DataFrame(gridsize_v_mem).to_csv(
+        f'formatted-data/{host_string}/gridsize_v_mem.csv',
+        index=False,
+        header=False
+    )
+    
+    # gridsize vs. peak mem
+    gridsize_v_peak_mem.append(tuple(gridsizes))
+    peak_mems = []
+    for data in gridsize_data:
+        mems = []
+        for row in data[1:]:            # skip header
+            mems.append(row['res'])
+        peak_mems.append(max(mems))
+    gridsize_v_peak_mem.append(tuple(peak_mems))
+    pandas.DataFrame(gridsize_v_peak_mem).to_csv(
+        f'formatted-data/{host_string}/gridsize_v_peak_mem.csv',
+        index=False,
+        header=False
+    )
+
+    # gridsize vs. avg cpu
+    gridsize_v_avg_cpu.append(tuple(gridsizes))
+    avg_cpus = []
+    for data in gridsize_data:
+        cpus = []
+        for row in data[1:]:            # skip header
+            cpus.append(row['%cpu'])
+        avg_cpus.append(sum(cpus)/len(cpus))
+    gridsize_v_avg_cpu.append(tuple(avg_cpus))
+    pandas.DataFrame(gridsize_v_avg_cpu).to_csv(
+        f'formatted-data/{host_string}/gridsize_v_avg_cpu.csv',
+        index=False,
+        header=False
+    )
+
 
 # ================ MAIN ================ 
 def main(argv):
@@ -431,11 +533,40 @@ def main(argv):
         sys.exit(1)
 
     cmd = ' '.join(argv[2:])    # the string representing the command to benchmark
+    print(f'\nProfiling \'{cmd}\'.\n')
+
+    # get name of the machine running the script
+    host_string = subprocess.run('hostname', capture_output=True).stdout.decode().strip()
+    # create host dirs if necessary
+    subprocess.run(
+        f'test -d raw-data/{host_string} || '
+        f'mkdir -p raw-data/{host_string}',
+        shell=True
+    )
+    subprocess.run(
+        f'test -d formatted-data/{host_string} || '
+        f'mkdir -p formatted-data/{host_string}',
+        shell=True
+    )
 
     # option handling
     if option == 'all':
-        profile_data(cmd, ['time+', 'res', '%cpu'])
-        format_data(g_hardware_gridsize, g_gridsize_machine, g_gridsizes)
+        profile_hardware(cmd, ['time+', 'res', '%cpu'], host_string)
+        profile_gridsize(cmd, ['time+', 'res', '%cpu'], host_string)
+        profile_gene_length(cmd, ['time+', 'res', '%cpu'], host_string)
+        # format_hardware_data()
+        # format_gridsize_data()
+        # format_gene_length_data()
+    elif option == 'hardware':
+        profile_hardware(cmd, ['time+', 'res', '%cpu'], host_string)
+        # format_hardware_data()
+    elif option == 'gridsize':
+        profile_gridsize(cmd, ['time+', 'res', '%cpu'], host_string)
+        # format_gridsize_data()
+    elif option == 'gene-length':
+        print("option: gene-length")
+        profile_gene_length(cmd, ['time+', 'res', '%cpu'], host_string)
+        # format_gene_length_data()
     elif option == 'help':
         print_usage(None)
     else:
