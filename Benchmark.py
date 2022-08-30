@@ -34,7 +34,7 @@ sure this includes 1000 unless Seagate suggests otherwise. """
 g_gridsizes = list(range(500, 1600, 100))
 
 """ The gene lengths at which to benchmark against the dependent variables. """
-g_gene_lengths = list(range(2, 8))
+g_gene_lengths = list(range(2, 9))
 
 """ The interval at which data points are obtained. Every g_ping_interval
 seconds a new data point is pinged. """
