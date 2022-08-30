@@ -14,13 +14,12 @@ g_rounds = 1
 
 """ The constant gridsize at which to benchmark hardware against the
 dependent variables. Should be 1000 unless Seagate suggests otherwise. """
-g_const_gridsize = 40
+g_const_gridsize = 1000
 
 """ The constant hardware (machine) on which to benchmark gridsize against
 the dependent variables. I'd recommend using the best machine you can access
 to speed up the scripts runtime. """
-# TODO: change back
-g_const_machine = 'buffalo'
+g_const_machine = 'csel-kh1250-13'
 
 """ The constant gene length at which to benchmark hardware against the
 dependent variables. Should be 5 unless Seagate suggests otherwise. """
