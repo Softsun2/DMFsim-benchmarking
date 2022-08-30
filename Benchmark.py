@@ -26,12 +26,16 @@ g_const_machine = 'buffalo'
 dependent variables. Should be 5 unless Seagate suggests otherwise. """
 g_const_gene_length = 5
 
+""" The machines on which to benchmark the dependent variables. Make
+sure this includes 1000 unless Seagate suggests otherwise. """
+g_machines = [ 'buffalo', 'csel-kh1262-13', 'csel-kh1250-13' ]
+
 """ The gridsizes at which to benchmark against the dependent variables. Make
 sure this includes 1000 unless Seagate suggests otherwise. """
 g_gridsizes = list(range(500, 1600, 100))
 
 """ The gene lengths at which to benchmark against the dependent variables. """
-g_gene_lengths = list(range(2, 9))
+g_gene_lengths = list(range(2, 8))
 
 """ The interval at which data points are obtained. Every g_ping_interval
 seconds a new data point is pinged. """
@@ -267,258 +271,211 @@ def profile_gene_length(cmd, target_metrics, host_string):
 
 
 # ================ FORMATTING ================ 
-def format_data(hardware_gridsize, gridsize_machine, gridsizes):
-    data_path_prefix = 'raw-data/'
-    hardware_files = []
-    gridsize_files = []
-    hardware_machines = []
+def format_runtime_data(title, header, data, path):
+    # format data
+    formatted_data = header
+    runtimes = []
+    for d in data:
+        runtimes.append(d[0]['total-runtime'])
+    formatted_data.append(tuple(runtimes))
 
+    # export data
+    pandas.DataFrame(formatted_data).to_csv(
+        f'{path+title}.csv',
+        index=False,
+        header=False
+    )
+
+def format_mem_data(title, header, data, path, mem_label):
+    # format data
+    formatted_data = header
+    labels = header[1]
+    mems = []
+    for i, d in enumerate(data):
+        for row in d:
+            nan_list = [numpy.nan for _ in range(len(labels))]
+            nan_list[0] = row['time+']
+            nan_list[i+1] = row[mem_label]
+            mems.append(tuple(nan_list))
+
+    # sort runtime-memory pairs by runtime
+    mems.sort(key=lambda ele: ele[0])
+
+    formatted_data += mems
+
+    # export data
+    pandas.DataFrame(formatted_data).to_csv(
+        f'{path+title}.csv',
+        index=False,
+        header=False
+    )
+
+def format_peak_mem_data(title, header, data, path, mem_label):
+     # format data
+    formatted_data = header
+    peak_mems = []
+    for d in data:
+        mems = []
+        for row in d:
+            mems.append(row[mem_label])
+        peak_mems.append(max(mems))
+    formatted_data.append(tuple(peak_mems))
+
+    # export data
+    pandas.DataFrame(formatted_data).to_csv(
+        f'{path+title}.csv',
+        index=False,
+        header=False
+    )
+
+def format_avg_cpu_data(title, header, data, path):
+    # format data
+    formatted_data = header
+    avg_cpus = []
+    for d in data:
+        cpus = []
+        for row in d:
+            cpus.append(row['%cpu'])
+        avg_cpus.append(sum(cpus)/len(cpus))
+    formatted_data.append(tuple(avg_cpus))
+
+    # export data
+    pandas.DataFrame(formatted_data).to_csv(
+        f'{path+title}.csv',
+        index=False,
+        header=False
+    )
+
+def import_data(raw_data_path, matcher, labeler, sorter):
     # get paths of raw-data and append them to their corresponding list
-    for machine_dir in os.listdir(data_path_prefix):
-        hardware_machines.append(machine_dir)
-        machine_path = os.path.join(data_path_prefix, machine_dir)
+    label_file_pairs = []
+    for machine in os.listdir(raw_data_path):
+        machine_path = os.path.join(raw_data_path, machine)
         if os.path.isdir(machine_path):
-            for machine_file in os.listdir(machine_path):
-                # append hardware files
-                if 'hw' in machine_file:
-                    hardware_files.append(os.path.join(machine_path, machine_file))
+            for file in os.listdir(machine_path):
+                if matcher(machine, file):
+                    label = labeler(machine, file)
+                    label_file_pairs.append(
+                        (label, os.path.join(machine_path, file))
+                    )
 
-                # append gridsize files
-                elif machine_dir == gridsize_machine:
-                    gridsize_files.append(os.path.join(machine_path, machine_file))
+    # sort by gridsize
+    if sorter:
+        label_file_pairs.sort(key=sorter)
 
-    # sort hardware on round number
-    sort_hardware_on = lambda ele: int(ele.split('/')[-1].split('-')[-1].split('.')[0])
-    sort_gridsize_on = lambda ele: int(ele.split('/')[-1].split('-')[1])
-    hardware_files.sort(key=sort_hardware_on)   # sort hardware files on round
-    gridsize_files.sort(key=sort_gridsize_on)   # sort gridsize files on gridsize
+    # import data
+    label_data_pairs = []
+    for label_file_pair in label_file_pairs:
+        label = label_file_pair[0]
+        label_file = label_file_pair[1]
+        label_data = pandas.read_csv(label_file).to_dict('records')
+        label_data_pairs.append((label, label_data))
 
-    hardware_data = []
-    gridsize_data = []
+    return label_data_pairs
 
-    for hardware_file in hardware_files:
-        machine_data = pandas.read_csv(hardware_file).to_dict('records')    # get a list of machine data records
-        machine_data.insert(0, {'col1': hardware_file.split('/')[1]})       # insert machine name as header
-        hardware_data.append(machine_data)
+def format_hardware_data(raw_data_path, formatted_data_path, mem_label):
+    matcher = lambda _, file: 'hw' in file
+    labeler = lambda machine, _: machine
+    sorter = None
 
-    for gridsize_file in gridsize_files:
-        data = pandas.read_csv(gridsize_file).to_dict('records')                       # get a list of gridsize data records
-        data.insert(0, {'col1': int(gridsize_file.split('/')[-1].split('-')[1])})      # insert gridsize as header
-        gridsize_data.append(data)
-    
-    # get hostname of machine running script
-    host_string = subprocess.run('hostname', capture_output=True).stdout.decode().strip()
-    # if target format directory doesn't exist, create it
-    subprocess.run(f'test -d formatted-data/{host_string} || mkdir -p formatted-data/{host_string}', shell=True)
+    machine_data_pairs = import_data(raw_data_path, matcher, labeler, sorter)
 
-    # always format harware data
-    format_hardware_data(host_string, hardware_gridsize, hardware_machines, hardware_data)
-    # if the machine running the script is the constant variable for gridsize, format the gridsize data
-    if host_string == g_const_machine:
-        format_gridsize_data(host_string, gridsize_machine, gridsizes, gridsize_data)
-
-def format_hardware_data(host_string, hardware_gridsize, hardware_machines, hardware_data):
-    # initialize data with headers
-    hardware_v_runtime = [(f'hardware vs. runtime ({hardware_gridsize})', )]
-    hardware_v_mem = [(f'hardware vs. memory ({hardware_gridsize})', )]
-    hardware_v_peak_mem = [(f'hardware vs. peak memory consumption ({hardware_gridsize})', )]
-    hardware_v_avg_cpu = [(f'hardware vs. avg cpu usage ({hardware_gridsize})', )]
-
-    # hardware vs. runtime
-    hardware_v_runtime.append(tuple(hardware_machines))     # add label row
-    runtimes = []
-    for data in hardware_data:
-        runtimes.append(data[1]['total-runtime'])
-    hardware_v_runtime.append(tuple(runtimes))
-    pandas.DataFrame(hardware_v_runtime).to_csv(
-        f'formatted-data/{host_string}/hardware_v_runtime.csv',
-        index=False,
-        header=False
+    # format and export data
+    labels = tuple([ pair[0] for pair in machine_data_pairs ])
+    data = [ pair[1] for pair in machine_data_pairs ]
+    path = formatted_data_path+'hardware/'
+    format_runtime_data(
+        'hardware-v-runtime', 
+        [ (f'hardware vs. runtime (gs={g_const_gridsize})', ), labels ],
+        data, path
+    )
+    format_mem_data(
+        'hardware-v-mem', 
+        [
+            (f'hardware vs. memory (gs={g_const_gridsize})', ),
+            ('time+', ) + labels
+        ],
+        data, path, mem_label
+    )
+    format_peak_mem_data(
+        'hardware-v-peak-mem', 
+        [ (f'hardware vs. peak memory (gs={g_const_gridsize})', ), labels ],
+        data, path, mem_label
+    )
+    format_avg_cpu_data(
+        'hardware-v-avg-cpu', 
+        [ (f'hardware vs. avg cpu % (gs={g_const_gridsize})', ), labels ],
+        data, path
     )
 
-    # hardware vs. mem
-    hardware_v_mem.append(tuple(['time+'] + hardware_machines))     # add label row
-    # a list of rows of runtime memory usage pairs, the column of
-    # memory usage corresponds with it's associated label's column.
-    mems = []
-    for i, data in enumerate(hardware_data):
-        for row in data[1:]:
-            nan_list = [numpy.nan for i in range(len(hardware_machines)+1)]
-            nan_list[0] = row['time+']
-            nan_list[i+1] = row['res']
-            mems.append(tuple(nan_list))
-    mems.sort(key=lambda ele: ele[0])       # sort all runtime-memory pairs by runtime
-    hardware_v_mem += mems
-    pandas.DataFrame(hardware_v_mem).to_csv(
-        f'formatted-data/{host_string}/hardware_v_mem.csv',
-        index=False,
-        header=False
+def format_gridsize_data(raw_data_path, formatted_data_path, mem_label, host_string):
+    matcher = lambda machine, file : machine == g_const_machine and 'gs' in file
+    labeler = lambda _, file : file.split('-')[1]
+    sorter = lambda ele : ele[0]
+
+    gridsize_data_pairs = import_data(raw_data_path, matcher, labeler, sorter)
+
+    # format and export data
+    labels = tuple([ pair[0] for pair in gridsize_data_pairs ])
+    data = [ pair[1] for pair in gridsize_data_pairs ]
+    path = f'{formatted_data_path+host_string}/'
+    format_runtime_data(
+        'gridsize-v-runtime', 
+        [ (f'gridsize vs. runtime (hw={g_const_machine})', ), labels ],
+        data, path
     )
-    
-    # hardware vs. peak mem
-    hardware_v_peak_mem.append(tuple(hardware_machines))        # add label row
-    peak_mems = []
-    for data in hardware_data:
-        mems = []
-        for row in data[1:]:            # skip header
-            mems.append(row['res'])
-        peak_mems.append(max(mems))
-    hardware_v_peak_mem.append(tuple(peak_mems))
-    pandas.DataFrame(hardware_v_peak_mem).to_csv(
-        f'formatted-data/{host_string}/hardware_v_peak_mem.csv',
-        index=False,
-        header=False
+    format_mem_data(
+        'gridsize-v-mem', 
+        [
+            (f'gridsize vs. memory (hw={g_const_machine})', ),
+            ('time+', ) + labels
+        ],
+        data, path, mem_label
+    )
+    format_peak_mem_data(
+        'gridsize-v-peak-mem', 
+        [ (f'gridsize vs. peak memory (hw={g_const_machine})', ), labels ],
+        data, path, mem_label
+    )
+    format_avg_cpu_data(
+        'gridsize-v-avg-cpu', 
+        [ (f'gridsize vs. avg cpu % (hw={g_const_machine})', ), labels ],
+        data, path
     )
 
-    # hardware vs. avg cpu
-    hardware_v_avg_cpu.append(tuple(hardware_machines))
-    avg_cpus = []
-    for data in hardware_data:
-        cpus = []
-        for row in data[1:]:            # skip header
-            cpus.append(row['%cpu'])
-        avg_cpus.append(sum(cpus)/len(cpus))
-    hardware_v_avg_cpu.append(tuple(avg_cpus))
-    pandas.DataFrame(hardware_v_avg_cpu).to_csv(
-        f'formatted-data/{host_string}/hardware_v_avg_cpu.csv',
-        index=False,
-        header=False
-    )
+def format_gene_length_data(raw_data_path, formatted_data_path, mem_label, host_string):
+    matcher = lambda machine, file : machine == g_const_machine and 'gl' in file
+    labeler = lambda _, file : file.split('-')[1]
+    sorter = lambda ele : ele[0]
 
-def format_gridsize_data(host_string, gridsize_machine, gridsizes, gridsize_data):
-    # initialize data with headers
-    gridsize_v_runtime = [(f'gridsize vs. runtime ({gridsize_machine})', )]
-    gridsize_v_mem = [(f'gridsize vs. memory ({gridsize_machine})', )]
-    gridsize_v_peak_mem = [(f'gridsize vs. peak memory consumption ({gridsize_machine})', )]
-    gridsize_v_avg_cpu = [(f'gridsize vs. avg cpu usage ({gridsize_machine})', )]
+    gene_length_data_pairs = import_data(raw_data_path, matcher, labeler, sorter)
 
-    # gridsize vs. runtime
-    gridsize_v_runtime.append(tuple(gridsizes))
-    runtimes = []
-    for data in gridsize_data:
-        runtimes.append(data[1]['total-runtime'])
-    gridsize_v_runtime.append(tuple(runtimes))
-    pandas.DataFrame(gridsize_v_runtime).to_csv(
-        f'formatted-data/{host_string}/gridsize_v_runtime.csv',
-        index=False,
-        header=False
+    # format and export data
+    labels = tuple([ pair[0] for pair in gene_length_data_pairs ])
+    data = [ pair[1] for pair in gene_length_data_pairs ]
+    path = f'{formatted_data_path+host_string}/'
+    format_runtime_data(
+        'gene-length-v-runtime', 
+        [ (f'gene length vs. runtime (hw={g_const_machine})', ), labels ],
+        data, path
     )
-
-    # gridsize vs. mem
-    gridsize_v_mem.append(tuple(['time+'] + [ f'gs={gs}' for gs in gridsizes ]))
-    # a list of rows of runtime memory usage pairs, the column of
-    # memory usage corresponds with it's associated label's column.
-    mems = []
-    for i, data in enumerate(gridsize_data):
-        for row in data[1:]:
-            nan_list = [numpy.nan for i in range(len(gridsizes)+1)]
-            nan_list[0] = row['time+']
-            nan_list[i+1] = row['res']
-            mems.append(tuple(nan_list))
-    mems.sort(key=lambda ele: ele[0])       # sort all runtime-memory pairs by runtime
-    gridsize_v_mem += mems
-    pandas.DataFrame(gridsize_v_mem).to_csv(
-        f'formatted-data/{host_string}/gridsize_v_mem.csv',
-        index=False,
-        header=False
+    format_mem_data(
+        'gene-length-v-mem', 
+        [
+            (f'gene length vs. memory (hw={g_const_machine})', ),
+            ('time+', ) + labels
+        ],
+        data, path, mem_label
     )
-    
-    # gridsize vs. peak mem
-    gridsize_v_peak_mem.append(tuple(gridsizes))
-    peak_mems = []
-    for data in gridsize_data:
-        mems = []
-        for row in data[1:]:            # skip header
-            mems.append(row['res'])
-        peak_mems.append(max(mems))
-    gridsize_v_peak_mem.append(tuple(peak_mems))
-    pandas.DataFrame(gridsize_v_peak_mem).to_csv(
-        f'formatted-data/{host_string}/gridsize_v_peak_mem.csv',
-        index=False,
-        header=False
+    format_peak_mem_data(
+        'gene-length-v-peak-mem', 
+        [ (f'gene length vs. peak memory (hw={g_const_machine})', ), labels ],
+        data, path, mem_label
     )
-
-    # gridsize vs. avg cpu
-    gridsize_v_avg_cpu.append(tuple(gridsizes))
-    avg_cpus = []
-    for data in gridsize_data:
-        cpus = []
-        for row in data[1:]:            # skip header
-            cpus.append(row['%cpu'])
-        avg_cpus.append(sum(cpus)/len(cpus))
-    gridsize_v_avg_cpu.append(tuple(avg_cpus))
-    pandas.DataFrame(gridsize_v_avg_cpu).to_csv(
-        f'formatted-data/{host_string}/gridsize_v_avg_cpu.csv',
-        index=False,
-        header=False
-    )
-
-def format_gene_length_data(host_string, gridsize_machine, gridsizes, gridsize_data):
-    # initialize data with headers
-    gridsize_v_runtime = [(f'gridsize vs. runtime ({gridsize_machine})', )]
-    gridsize_v_mem = [(f'gridsize vs. memory ({gridsize_machine})', )]
-    gridsize_v_peak_mem = [(f'gridsize vs. peak memory consumption ({gridsize_machine})', )]
-    gridsize_v_avg_cpu = [(f'gridsize vs. avg cpu usage ({gridsize_machine})', )]
-
-    # gridsize vs. runtime
-    gridsize_v_runtime.append(tuple(gridsizes))
-    runtimes = []
-    for data in gridsize_data:
-        runtimes.append(data[1]['total-runtime'])
-    gridsize_v_runtime.append(tuple(runtimes))
-    pandas.DataFrame(gridsize_v_runtime).to_csv(
-        f'formatted-data/{host_string}/gridsize_v_runtime.csv',
-        index=False,
-        header=False
-    )
-
-    # gridsize vs. mem
-    gridsize_v_mem.append(tuple(['time+'] + [ f'gs={gs}' for gs in gridsizes ]))
-    # a list of rows of runtime memory usage pairs, the column of
-    # memory usage corresponds with it's associated label's column.
-    mems = []
-    for i, data in enumerate(gridsize_data):
-        for row in data[1:]:
-            nan_list = [numpy.nan for i in range(len(gridsizes)+1)]
-            nan_list[0] = row['time+']
-            nan_list[i+1] = row['res']
-            mems.append(tuple(nan_list))
-    mems.sort(key=lambda ele: ele[0])       # sort all runtime-memory pairs by runtime
-    gridsize_v_mem += mems
-    pandas.DataFrame(gridsize_v_mem).to_csv(
-        f'formatted-data/{host_string}/gridsize_v_mem.csv',
-        index=False,
-        header=False
-    )
-    
-    # gridsize vs. peak mem
-    gridsize_v_peak_mem.append(tuple(gridsizes))
-    peak_mems = []
-    for data in gridsize_data:
-        mems = []
-        for row in data[1:]:            # skip header
-            mems.append(row['res'])
-        peak_mems.append(max(mems))
-    gridsize_v_peak_mem.append(tuple(peak_mems))
-    pandas.DataFrame(gridsize_v_peak_mem).to_csv(
-        f'formatted-data/{host_string}/gridsize_v_peak_mem.csv',
-        index=False,
-        header=False
-    )
-
-    # gridsize vs. avg cpu
-    gridsize_v_avg_cpu.append(tuple(gridsizes))
-    avg_cpus = []
-    for data in gridsize_data:
-        cpus = []
-        for row in data[1:]:            # skip header
-            cpus.append(row['%cpu'])
-        avg_cpus.append(sum(cpus)/len(cpus))
-    gridsize_v_avg_cpu.append(tuple(avg_cpus))
-    pandas.DataFrame(gridsize_v_avg_cpu).to_csv(
-        f'formatted-data/{host_string}/gridsize_v_avg_cpu.csv',
-        index=False,
-        header=False
+    format_avg_cpu_data(
+        'gene-length-v-avg-cpu', 
+        [ (f'gene length vs. avg cpu % (hw={g_const_machine})', ), labels ],
+        data, path
     )
 
 
@@ -532,46 +489,60 @@ def main(argv):
         print_usage(None)
         sys.exit(1)
 
-    cmd = ' '.join(argv[2:])    # the string representing the command to benchmark
-    print(f'\nProfiling \'{cmd}\'.\n')
+    # the string representing the command to benchmark
+    cmd = ' '.join(argv[2:])
+
+    # memory type to use as memory metric
+    mem_label = 'res'
+
+    # data paths
+    raw_data_path = 'raw-data/'
+    formatted_data_path = 'formatted-data/'
 
     # get name of the machine running the script
     host_string = subprocess.run('hostname', capture_output=True).stdout.decode().strip()
-    # create host dirs if necessary
+
+    # create data dirs if necessary
     subprocess.run(
-        f'test -d raw-data/{host_string} || '
-        f'mkdir -p raw-data/{host_string}',
+        f'test -d {raw_data_path + host_string} || '
+        f'mkdir -p {raw_data_path + host_string}',
         shell=True
     )
     subprocess.run(
-        f'test -d formatted-data/{host_string} || '
-        f'mkdir -p formatted-data/{host_string}',
+        f'test -d {formatted_data_path + host_string} || '
+        f'mkdir -p {formatted_data_path + host_string}',
+        shell=True
+    )
+    subprocess.run(
+        f'test -d {formatted_data_path}hardware || '
+        f'mkdir -p {formatted_data_path}hardware',
         shell=True
     )
 
+    print(f'\nProfiling \'{cmd}\'.\n')
+
     # option handling
     if option == 'all':
-        profile_hardware(cmd, ['time+', 'res', '%cpu'], host_string)
-        profile_gridsize(cmd, ['time+', 'res', '%cpu'], host_string)
-        profile_gene_length(cmd, ['time+', 'res', '%cpu'], host_string)
-        # format_hardware_data()
-        # format_gridsize_data()
-        # format_gene_length_data()
+        # profile_hardware(cmd, ['time+', mem_label, '%cpu'], host_string)
+        # profile_gridsize(cmd, ['time+', mem_label, '%cpu'], host_string)
+        # profile_gene_length(cmd, ['time+', mem_label, '%cpu'], host_string)
+        format_hardware_data(raw_data_path, formatted_data_path, mem_label)
+        format_gridsize_data(raw_data_path, formatted_data_path, mem_label, host_string)
+        format_gene_length_data(raw_data_path, formatted_data_path, mem_label, host_string)
     elif option == 'hardware':
-        profile_hardware(cmd, ['time+', 'res', '%cpu'], host_string)
-        # format_hardware_data()
+        profile_hardware(cmd, ['time+', mem_label, '%cpu'], host_string)
+        format_hardware_data(raw_data_path, formatted_data_path, mem_label)
     elif option == 'gridsize':
-        profile_gridsize(cmd, ['time+', 'res', '%cpu'], host_string)
-        # format_gridsize_data()
+        profile_gridsize(cmd, ['time+', mem_label, '%cpu'], host_string)
+        format_gridsize_data(raw_data_path, formatted_data_path, mem_label, host_string)
     elif option == 'gene-length':
-        print("option: gene-length")
-        profile_gene_length(cmd, ['time+', 'res', '%cpu'], host_string)
-        # format_gene_length_data()
+        profile_gene_length(cmd, ['time+', mem_label, '%cpu'], host_string)
+        format_gene_length_data(raw_data_path, formatted_data_path, mem_label, host_string)
     elif option == 'help':
         print_usage(None)
     else:
         print_usage(option)
-    
+
     print('\nProfiling done. See \'raw-data\' for raw output. See \'formatted-data\' for formatted output.\n')
 
 
