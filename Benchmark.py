@@ -7,22 +7,22 @@ import numpy            # nan values
 
 
 # ================ PARAMETERS ================ 
-g_target_metrics = ['time+', 'res', '%cpu']
+# g_target_metrics = ['time+', 'res', '%cpu']
+g_target_metrics = [ 'time+' ]
 
 """ The number of rounds to run the simulation for a given independent variable.
 This MUST be ONE in order for the formatting to work, otherwise you'll have
 format dozens of csv files by hand or write your own script to do so. """
-g_rounds = 3
+g_rounds = 50
 
 """ The constant gridsize at which to benchmark hardware against the
 dependent variables. Should be 1000 unless Seagate suggests otherwise. """
-g_const_gridsize = 40
+g_const_gridsize = 1000
 
 """ The constant hardware (machine) on which to benchmark gridsize against
 the dependent variables. I'd recommend using the best machine you can access
 to speed up the scripts runtime. """
-# g_const_machine = 'csel-kh1250-13'
-g_const_machine = 'buffalo'
+g_const_machine = 'csel-kh1250-13'
 
 """ The constant gene length at which to benchmark hardware against the
 dependent variables. Should be 5 unless Seagate suggests otherwise. """
@@ -37,7 +37,8 @@ sure this includes 1000 unless Seagate suggests otherwise. """
 g_gridsizes = list(range(500, 1600, 100))
 
 """ The gene lengths at which to benchmark against the dependent variables. """
-g_gene_lengths = list(range(2, 8))
+# g_gene_lengths = list(range(100, 1000, 200))
+g_gene_lengths = [ 100 ]
 
 """ The interval at which data points are obtained. Every g_ping_interval
 seconds a new data point is pinged. """
@@ -596,8 +597,8 @@ def main(argv):
         profile_gridsize(cmd, g_target_metrics, host_string)
         format_gridsize_data(raw_data_path, formatted_data_path, g_target_metrics, host_string)
     elif option == 'gene-length':
-        # profile_gene_length(cmd, g_target_metrics, host_string)
-        # format_gene_length_data(raw_data_path, formatted_data_path, g_target_metrics, host_string)
+        profile_gene_length(cmd, g_target_metrics, host_string)
+        format_gene_length_data(raw_data_path, formatted_data_path, g_target_metrics, host_string)
         format_congestion_data(raw_data_path, formatted_data_path, host_string)
     elif option == 'help':
         print_usage(None)
