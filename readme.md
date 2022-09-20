@@ -11,13 +11,13 @@ The script obtains metric data from the simulation with [top](https://man7.org/l
 The following assumes that the benchmarking repo is located at the top level of the `DMFsim` repo.
 
 #### Setup
+*\*Make backups of the original files if desired.*
 1) Copy/replace all the included python files within `patched-python-files` to the `DMFsim` directory.
 2) Copy the included `toprc` to `~/.config/procps/toprc`. You may need to create the config directory if it doesn't exist.
-3) Run the benchmarking script. Refer to [Usage](##Usage) for usage information.
+3) Run the benchmarking script. Refer to [Usage](readme.md#usage) for usage information.
     ```
     python3 Benchmark.py all python3 ../Tutorial.py
     ```
-*\*Make backups of the original files if desired.\**
 
 #### Usage
 Running `python3 Benchmark.py help` will print the following information.
