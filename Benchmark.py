@@ -7,45 +7,39 @@ import numpy            # nan values
 
 
 # ================ PARAMETERS ================ 
-# g_target_metrics = ['time+', 'res', '%cpu']
-g_target_metrics = [ 'time+' ]
+""" The target metrics, a list of strings corresponding to top metric headers.
+When benchmarking an independent variable the specified target metrics will be obtained
+per ping from top. "time+": runtime, "res": RAM usage, "%cpu": cpu usage. """
+g_target_metrics = ['time+', 'res', '%cpu']
 
-""" The number of rounds to run the simulation for a given independent variable.
-This MUST be ONE in order for the formatting to work, otherwise you'll have
-format dozens of csv files by hand or write your own script to do so. """
+""" The number of rounds to run the simulation for a given independent variable. """
 g_rounds = 5
 
-""" The constant gridsize at which to benchmark hardware against the
-dependent variables. Should be 1000 unless Seagate suggests otherwise. """
+""" The grid size used when grid size is a constant variable.
+Should be 1000 unless Seagate suggests otherwise. """
 g_const_gridsize = 1000
 
-""" The constant hardware (machine) on which to benchmark gridsize against
-the dependent variables. I'd recommend using the best machine you can access
-to speed up the scripts runtime. """
+""" The hardware (machine) used when hardware is a constant variable.
+I'd recommend using the best machine you can access to speed up runtimes. """
 g_const_machine = 'csel-kh1250-13'
 
-""" The constant gene length at which to benchmark hardware against the
-dependent variables. Should be 5 unless Seagate suggests otherwise. """
+""" The gene length used when gene length is a constant variable. Should
+be 5 unless Seagate suggests otherwise. """
 g_const_gene_length = 5
 
-""" The machines on which to benchmark the dependent variables. Make
+""" The grid sizes at which to benchmark against the dependent variables. Make
 sure this includes 1000 unless Seagate suggests otherwise. """
-g_machines = [ 'buffalo', 'csel-kh1262-13', 'csel-kh1250-13' ]
-
-""" The gridsizes at which to benchmark against the dependent variables. Make
-sure this includes 1000 unless Seagate suggests otherwise. """
-# g_gridsizes = list(range(500, 1600, 100))
-g_gridsizes = [ 1400 ]
+g_gridsizes = list(range(500, 1600, 100))
 
 """ The gene lengths at which to benchmark against the dependent variables. """
-# g_gene_lengths = list(range(100, 1000, 200))
-g_gene_lengths = [ 100 ]
+g_gene_lengths = list(range(2, 9))
 
 """ The interval at which data points are obtained. Every g_ping_interval
 seconds a new data point is pinged. """
 g_ping_interval = 0.07       # in seconds
-# something for number of chemistry sites
 
+
+# DO NOT MODIFY THE FOLLOWING GLOBALS
 """ possible target metrics, the ordering depends on the user's top configuration
 these indexes will not be accurate if the given toprc is not used! """
 g_targets = {   # see https://man7.org/linux/man-pages/man1/top.1.html for explanation
@@ -73,7 +67,7 @@ def print_usage(opt):
     '       all         - benchmark all options\n'
     '       hardware    - benchmark hardware only\n'
     '       gridsize    - benchmark gridsize only\n'
-    '       gene-length - benchmark gene length only\n'
+    '       gene-length - benchmark only gene length & congestion\n'
     '       help        - display usage'
     )
     print(usage)
