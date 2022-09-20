@@ -13,7 +13,7 @@ g_target_metrics = [ 'time+' ]
 """ The number of rounds to run the simulation for a given independent variable.
 This MUST be ONE in order for the formatting to work, otherwise you'll have
 format dozens of csv files by hand or write your own script to do so. """
-g_rounds = 50
+g_rounds = 5
 
 """ The constant gridsize at which to benchmark hardware against the
 dependent variables. Should be 1000 unless Seagate suggests otherwise. """
@@ -34,7 +34,8 @@ g_machines = [ 'buffalo', 'csel-kh1262-13', 'csel-kh1250-13' ]
 
 """ The gridsizes at which to benchmark against the dependent variables. Make
 sure this includes 1000 unless Seagate suggests otherwise. """
-g_gridsizes = list(range(500, 1600, 100))
+# g_gridsizes = list(range(500, 1600, 100))
+g_gridsizes = [ 1400 ]
 
 """ The gene lengths at which to benchmark against the dependent variables. """
 # g_gene_lengths = list(range(100, 1000, 200))
