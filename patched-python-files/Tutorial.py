@@ -230,17 +230,18 @@ sch.Compile_Instructions(num=float('inf'), makeplot=False, wait_time=0.025, vers
 #Check if it succeeded in generating the symbols you asked for.
 if Check(lab, data):
     # export droplet count
-    total_droplets, max_droplet_count = lab.Get_Droplet_Counts()
-    congestion_history = lab.Get_Congestion_History()
+    if not host_string or not b_round:
+        total_droplets, max_droplet_count = lab.Get_Droplet_Counts()
+        congestion_history = lab.Get_Congestion_History()
 
-    gene_length_data_path = f'raw-data/{host_string}/'
+        gene_length_data_path = f'raw-data/{host_string}/'
 
-    gene_length_data = [
-        ('total droplets', 'max droplets', 'max congestion'),
-        (total_droplets, max_droplet_count, max(congestion_history))
-    ]
-    pandas.DataFrame(tuple(gene_length_data)).to_csv(
-        f'{gene_length_data_path}cg-{datalen}-{b_round}.csv',
-        index=False,
-        header=False
-    )
+        gene_length_data = [
+            ('total droplets', 'max droplets', 'max congestion'),
+            (total_droplets, max_droplet_count, max(congestion_history))
+        ]
+        pandas.DataFrame(tuple(gene_length_data)).to_csv(
+            f'{gene_length_data_path}cg-{datalen}-{b_round}.csv',
+            index=False,
+            header=False
+        )
