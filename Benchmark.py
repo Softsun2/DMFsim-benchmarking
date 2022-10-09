@@ -13,11 +13,11 @@ per ping from top. "time+": runtime, "res": RAM usage, "%cpu": cpu usage. """
 g_target_metrics = ['time+', 'res', '%cpu']
 
 """ The number of rounds to run the simulation for a given independent variable. """
-g_rounds = 1
+g_rounds = 5
 
 """ The grid size used when grid size is a constant variable.
 Should be 1000 unless Seagate suggests otherwise. """
-g_const_gridsize = 50
+g_const_gridsize = 1000
 
 """ The hardware (machine) used when hardware is a constant variable.
 I'd recommend using the best machine you can access to speed up runtimes. """
