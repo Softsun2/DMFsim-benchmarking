@@ -558,6 +558,9 @@ def main(argv):
     # get name of the machine running the script
     host_string = subprocess.run('hostname', capture_output=True).stdout.decode().strip()
 
+    if host_string != g_const_machine:
+        print("Host machine doesn't match target machine.")
+
     # create data dirs if necessary
     subprocess.run(
         f'test -d {raw_data_path + host_string} || '
