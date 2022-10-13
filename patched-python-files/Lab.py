@@ -19,9 +19,6 @@ It's just there so that you can use it in the future.
         
     
 """
-
-# TODO: find where to count initial droplests
-
 import numpy as np
 import copy
 import matplotlib.pyplot as plt
@@ -141,7 +138,27 @@ class Lab():
     def Get_Congestion(self, alpha, beta):
         #Calculate congestion value and report it
         #For now, congestion is sum of area occupied by droplets divided by total area
-        return sum([x.area for x in self.droplets])/(self.grid_dim[0]*self.grid_dim[1])
+
+        coords = []
+        for droplet in self.droplets:
+            route = droplet.Get_Route()
+            for coord_3d in route:
+                # where coord takes the format
+                # (time, x, y)
+                coord_2d = (coord_3d[1], coord_3d[2])
+                gridpoint_coords = [gridpoint.indices for gridpoint in droplet.gridpoints]
+                if coord_2d not in coords and coord_2d not in gridpoint_coords:
+                    coords.append((coord_3d[1], coord_3d[2]))
+
+        routing_congestion = 100 * (len(coords)/(self.grid_dim[0] ** 2))
+
+        routing_congestion += sum([x.area for x in self.droplets])/(self.grid_dim[0]*self.grid_dim[1])
+
+        print(f'routing congestion: {routing_congestion}')
+
+        return routing_congestion
+
+
             
     def Pull_Droplets(self, index_list, keys = None, nodes = None):
         #Pulls the droplets at the appropriate gridpoint.
@@ -386,6 +403,9 @@ class Droplet():
     def At_Dest(self):
         #Check if the droplet is centered at its destination and has no ongoing route planned
         return (self.Get_Loc() == self.Get_Dest()) and not self.Is_Routed()
+    
+    def Get_Route(self):
+        return self.route
     
     def Get_Shape(self, group_total = False):
         #Returns the shape of the droplet if group_total is False, else the shape of the droplet's entire collision group once merged
