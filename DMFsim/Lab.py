@@ -139,37 +139,25 @@ class Lab():
         #Calculate congestion value and report it
 
         #For now, congestion is sum of area occupied by droplets divided by total area
-        # sum([x.area for x in self.droplets])/(self.grid_dim[0]*self.grid_dim[1])
 
-        # TODO(SS2): Derive a sensible congestion calculation
-        """
-        congestion is the sum of the unique gridpoints being used for routing,
-        the gridpoints containing droplets, and the occluded gridpoints, divided
-        by the total number of gridpoints
-
-        """
         coords = []
-        for i, droplet in enumerate(self.droplets):
+        for droplet in self.droplets:
             route = droplet.Get_Route()
             for coord_3d in route:
-                # where coord_3d takes the format
+                # where coord takes the format
                 # (time, x, y)
                 coord_2d = (coord_3d[1], coord_3d[2])
+                gridpoint_coords = [gridpoint.indices for gridpoint in droplet.gridpoints]
+                if coord_2d not in coords and coord_2d not in gridpoint_coords:
+                    coords.append((coord_3d[1], coord_3d[2]))
 
-                area_gridpoints = [gridpoint.indices for gridpoint in droplet.gridpoints]
-                area_gridpoints += [gridpoint.indices for gridpoint in droplet.occluded]
+        routing_congestion = 100 * (len(coords)/(self.grid_dim[0] ** 2))
 
-                if coord_2d not in coords:
-                    coords.append(coord_2d)
+        routing_congestion += sum([x.area for x in self.droplets])/(self.grid_dim[0]*self.grid_dim[1])
 
-                for gridpoint in area_gridpoints:
-                    if gridpoint not in coords:
-                        coords.append(gridpoint)
+        print(f'routing congestion: {routing_congestion}')
 
-
-        congestion = 100 * (len(coords)/(self.grid_dim[0] ** 2))
-
-        return congestion
+        return routing_congestion
 
 
             
