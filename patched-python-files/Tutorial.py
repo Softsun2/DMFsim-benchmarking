@@ -230,7 +230,7 @@ sch.Compile_Instructions(num=float('inf'), makeplot=False, wait_time=0.025, vers
 #Check if it succeeded in generating the symbols you asked for.
 if Check(lab, data):
     # export droplet count
-    if not host_string or not b_round:
+    if host_string is not None and b_round is not None:
         total_droplets, max_droplet_count = lab.Get_Droplet_Counts()
         congestion_history = lab.Get_Congestion_History()
 
