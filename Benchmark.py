@@ -17,11 +17,11 @@ g_rounds = 1
 
 """ The grid size used when grid size is a constant variable.
 Should be 1000 unless Seagate suggests otherwise. """
-g_const_gridsize = 100
+g_const_gridsize = 45
 
 """ The hardware (machine) used when hardware is a constant variable.
 I'd recommend using the best machine you can access to speed up runtimes. """
-g_const_machine = 'csel-kh1250-13'
+g_const_machine = 'csel-kh1250-14'
 
 """ The gene length used when gene length is a constant variable. Should
 be 5 unless Seagate suggests otherwise. """
@@ -32,14 +32,14 @@ sure this includes 1000 unless Seagate suggests otherwise. """
 g_gridsizes = list(range(500, 1600, 100))
 
 """ The gene lengths at which to benchmark against the dependent variables. """
-g_gene_lengths = list(range(2, 21))
+g_gene_lengths = list(range(2, 13))
 
 """ The interval at which data points are obtained. Every g_ping_interval
 seconds a new data point is pinged. """
 g_ping_interval = 0.07       # in seconds
 
 
-# DO NOT MODIFY THE FOLLOWING GLOBALS
+# These should NOT be modified.
 """ possible target metrics, the ordering depends on the user's top configuration
 these indexes will not be accurate if the given toprc is not used! """
 g_targets = {   # see https://man7.org/linux/man-pages/man1/top.1.html for explanation
@@ -558,6 +558,9 @@ def main(argv):
     # get name of the machine running the script
     host_string = subprocess.run('hostname', capture_output=True).stdout.decode().strip()
 
+    if host_string != g_const_machine:
+        print("Host machine doesn't match target machine.")
+
     # create data dirs if necessary
     subprocess.run(
         f'test -d {raw_data_path + host_string} || '
@@ -577,7 +580,6 @@ def main(argv):
 
     print(f'\nProfiling \'{cmd}\'.\n')
 
-    # this guy is a square!!!
     variable_count = -1
 
     # option handling
