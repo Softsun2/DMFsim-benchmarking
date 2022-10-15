@@ -139,22 +139,29 @@ class Lab():
         #Calculate congestion value and report it
         #For now, congestion is sum of area occupied by droplets divided by total area
 
+        # TODO(SS2): Derive a sensible congestion calculation
+
         coords = []
-        for droplet in self.droplets:
+        for i, droplet in enumerate(self.droplets):
             route = droplet.Get_Route()
             for coord_3d in route:
                 # where coord takes the format
                 # (time, x, y)
                 coord_2d = (coord_3d[1], coord_3d[2])
-                gridpoint_coords = [gridpoint.indices for gridpoint in droplet.gridpoints]
-                if coord_2d not in coords and coord_2d not in gridpoint_coords:
-                    coords.append((coord_3d[1], coord_3d[2]))
+                area_gridpoints = [gridpoint.indices for gridpoint in droplet.gridpoints]
+                area_gridpoints += [gridpoint.indices for gridpoint in droplet.occluded]
+                # if coord_2d not in coords and coord_2d not in gridpoint_coords:
+                if coord_2d not in coords:
+                    coords.append(coord_2d)
+
+                for gridpoint in area_gridpoints:
+                    if gridpoint not in coords:
+                        coords.append(gridpoint)
+
 
         routing_congestion = 100 * (len(coords)/(self.grid_dim[0] ** 2))
 
-        routing_congestion += sum([x.area for x in self.droplets])/(self.grid_dim[0]*self.grid_dim[1])
-
-        print(f'routing congestion: {routing_congestion}')
+        # sum([x.area for x in self.droplets])/(self.grid_dim[0]*self.grid_dim[1])
 
         return routing_congestion
 
@@ -1086,7 +1093,7 @@ def Plot_Droplets(lab, ax=None, wait_time = 0, step=None, saveplot = False, name
     ax.set_ylim([0, lab.grid_dim[1]])
 
     if step is not None:
-        ax.set_title('Lab time: {}'.format(step))
+        ax.set_title(f'Lab time: {step}, Congestion: {lab.Get_Congestion(0, 0)}')
         
     #Loop through the droplets and plot all the occlusion boxes
     for dp in lab.droplets:
@@ -1097,7 +1104,7 @@ def Plot_Droplets(lab, ax=None, wait_time = 0, step=None, saveplot = False, name
         
         #Add the droplet's route in gray boxes
         # if dp.Is_Routed():
-        #     [ax.add_artist(lab.grid[x[1:3]].Get_Square(color=(0.5, 0.5, 0.5), zorder=1)) for x in dp.route]
+            #[ax.add_artist(lab.grid[x[1:3]].Get_Square(color=(0.5, 0.5, 0.5), zorder=1)) for x in dp.route]
        
         #Add the occupied and occluded gridpoints as yellow and blue boxes, respectively.
         # [ax.add_artist(gp.Get_Square(color = (1,1,0), zorder = 10)) for gp in dp.gridpoints];
@@ -1105,8 +1112,8 @@ def Plot_Droplets(lab, ax=None, wait_time = 0, step=None, saveplot = False, name
         
         #If it has a destination, draw that as a red box and an arrow pointing to it.
         # if dp.Get_Dest():
-        #     ax.add_artist(lab.grid[dp.Get_Dest()].Get_Square(color=(1,0,0), zorder = 1))
-        #     ax.add_artist(plt.arrow(*dp.coords, *(np.array(dp.Get_Dest()) - dp.Get_Loc()), zorder = 25))
+            # ax.add_artist(lab.grid[dp.Get_Dest()].Get_Square(color=(1,0,0), zorder = 1))
+            # ax.add_artist(plt.arrow(*dp.coords, *(np.array(dp.Get_Dest()) - dp.Get_Loc()), zorder = 25))
             
     #For any active gridpoints, color them orange.
     for gp in lab.grid.values():

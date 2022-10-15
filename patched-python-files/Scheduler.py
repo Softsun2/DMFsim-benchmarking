@@ -74,6 +74,7 @@ class Scheduler():
 
         #Loop until the root node has concluded or until the num limit is reached
         while (time.time() - start_time < float('inf')) and (self.no_progress_tracker < float('inf')) and (self.time < num) and (not self.nodes[-1][-1].Concluded()):
+        # while (time.time() - start_time < 600) and (self.no_progress_tracker < 500) and (self.time < num) and (not self.nodes[-1][-1].Concluded()):
             #Update the time tracker
             self.time += 1
             self.no_progress_tracker += 1
@@ -126,9 +127,10 @@ class Scheduler():
                     c.Clear(grid=self.lab.grid, time=self.time, parent = n)
                     self.current_nodes.remove(c)            
         
+        # while (time.time() - start_time < 600) and (self.no_progress_tracker < 500) and (self.time < num) and (not self.nodes[-1][-1].Concluded()):
         print('\nReason for exiting:')
-        print('(time.time() - start_time < float(\'inf\')):', not (time.time() - start_time < float('inf')))
-        print('(self.no_progress_tracker < float(\'inf\')):', not (self.no_progress_tracker < float('inf')))
+        print('(time.time() - start_time < 600):', not (time.time() - start_time < 600))
+        print('(self.no_progress_tracker < 500):', not (self.no_progress_tracker < 500))
         print('(self.time < num):', not (self.time < num))
         print('(not self.nodes[-1][-1].Concluded()):', not (not self.nodes[-1][-1].Concluded()))
 
