@@ -226,6 +226,7 @@ sch = Scheduler(nodes, inst_locs, pull_data, lab)
 #and setting new destinations when they arrive.
 #One time-step corresponds to the time it takes a droplet to move one gridspace.
 sch.Compile_Instructions(num=float('inf'), makeplot=False, wait_time=0.025, version=Int.version)
+# sch.Compile_Instructions(makeplot=False, wait_time=0.025, version=Int.version)
 
 #Check if it succeeded in generating the symbols you asked for.
 if Check(lab, data):
