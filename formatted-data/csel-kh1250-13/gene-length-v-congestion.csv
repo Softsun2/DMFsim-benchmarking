@@ -1,9 +1,0 @@
-"gene length vs. congestion (hw=csel-kh1250-13, gs=50)",,
-total droplets,max droplets,max congestion
-9,4,0.0036
-13,5,0.0052
-21,5,0.0084
-29,9,0.0116
-33,10,0.0132
-37,10,0.0148
-45,13,0.018
