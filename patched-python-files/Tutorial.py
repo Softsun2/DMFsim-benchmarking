@@ -51,6 +51,7 @@ def parse_benchmark_cmdline_args():
     gene_length = 5     # default gene length 
     host_string = None
     b_round = None
+    gui = False
 
     for arg in sys.argv[1:]:
         if "--gridsize=" in arg:
@@ -67,8 +68,10 @@ def parse_benchmark_cmdline_args():
             round_string = arg.split("=")[1]
             if round_string.isdigit():
                 b_round = int(round_string)
+        elif "--gui" in arg:
+            gui = True
 
-    return gridsize, gene_length, host_string, b_round
+    return gridsize, gene_length, host_string, b_round, gui
 
 
 #########################################################
@@ -133,7 +136,7 @@ random.seed(42)
 
 #Set the gene's symbol length (The number of symbols to be assembled into a single gene)
 #and the lab grid width
-width, datalen, host_string, b_round = parse_benchmark_cmdline_args()
+width, datalen, host_string, b_round, gui = parse_benchmark_cmdline_args()
 
 #Get a list of the interior grid coordinates.
 #This is where the reaction sites *could* be placed.
@@ -225,7 +228,7 @@ sch = Scheduler(nodes, inst_locs, pull_data, lab)
 #The Router moves one time-step at a time, directing droplets towards their destinations
 #and setting new destinations when they arrive.
 #One time-step corresponds to the time it takes a droplet to move one gridspace.
-sch.Compile_Instructions(num=float('inf'), makeplot=False, wait_time=0.025, version=Int.version)
+sch.Compile_Instructions(num=float('inf'), makeplot=gui, wait_time=0.025, version=Int.version)
 # sch.Compile_Instructions(makeplot=False, wait_time=0.025, version=Int.version)
 
 #Check if it succeeded in generating the symbols you asked for.
