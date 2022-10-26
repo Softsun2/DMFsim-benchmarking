@@ -97,6 +97,8 @@ class Lab():
             
         self.time += 1
 
+        print(f'congestion: {round(self.Get_Congestion(0, 0), 2)}')
+        
         #Update the Gridpoint instructions.
         self.Update_Inst(inst_indices, insts)
         
