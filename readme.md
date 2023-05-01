@@ -30,7 +30,7 @@ The script obtains hardware metrics and gene synthesis congestion data while run
     ```
 3) Run the benchmarking script. Refer to [Usage](readme.md#usage) for usage information.
     ```
-    python3 Benchmark.py all python3 ../Tutorial.py
+    python3 Benchmark.py all python3 DMFsim/Tutorial.py
     ```
 
 #### Usage
