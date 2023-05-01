@@ -21,12 +21,11 @@ The script obtains hardware metrics and gene synthesis congestion data while run
 ### Running the Script
 
 #### Setup
-1) Copy/replace all the included python files within `patched-python-files` to the `DMFsim` directory.
 1) Obtain provided source code (clone or download this repo).
-2) Copy the included `toprc` to `~/.config/procps/toprc`. You may need to create the config directory if it doesn't exist.
+2) Copy the included `toprc` to `~/.config/procps/toprc`. You may need to create the config directory if it doesn't exist. You may also want to make a back-up of your current `toprc` if you have one.
     ```
     # from the repo's root
-    test [ ~/.config/procps -d ] || mkdir -p ~/.config/procps
+    test [ -d "$HOME/.config/procps" ] || mkdir -p "$HOME/.config/procps"
     cp ./toprc ~/.config/procps
     ```
 3) Run the benchmarking script. Refer to [Usage](readme.md#usage) for usage information.
