@@ -77,4 +77,4 @@ The following list denotes the data used to create each figure and table in the 
 * Fig 23: [gene-length.csv](data/gene-length.csv)
 
 ## Aside
-The program [gephi](https://gephi.org/) was used in order to determine runtime of sub-routines within the simulation.
+The program [gephi](https://gephi.org/) was used in order to determine the runtimes of sub-routines within the simulation.
