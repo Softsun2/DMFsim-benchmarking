@@ -13,7 +13,7 @@ Source independent DMFsim benchmarking.
 └── toprc               # Provided top configuration file
 ```
 
-Additional directories will be generated upon running the benchmarking script exporting data. This is explained further [later](readme.md#output data).
+Additional directories will be generated upon running the benchmarking script exporting data. This is explained further [later](readme.md#output-data).
 
 ## [The Script](Benchmark.py)
 The script obtains hardware metrics and gene synthesis congestion data while running the simulation. Hardware metrics are obtained using [top](https://man7.org/linux/man-pages/man1/top.1.html). Gene synthesis congestion data are recorded directly by the simulation. After obtaining the data the script exports and formats the data to a spreadsheet readable format (csv).
