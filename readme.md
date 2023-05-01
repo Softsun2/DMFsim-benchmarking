@@ -60,5 +60,20 @@ Data is exported to a directory within the benchmarking repo named `raw-data`.
 
 All csv file names are appended with an integer identifying the benchmarking round of the corresponding independent variable. Runtime is measured in seconds, memory is measured in Gib, CPU usage is measured as a proportion, and congestion is the ratio of the total number of droplets pulled from reservoirs to the number of grid points.
 
-### Formatted Data
-Formatted data is exported to a directory within the benchmarking repo named `formatted-data`. The directory structure and file names describe the formatted data. The data is formatted to make organization and graphing more convenient. See how the data used in the paper was organized [here](data).
+#### Formatted Data
+Formatted data is exported to a directory within the benchmarking repo named `formatted-data`. The directory structure and file names describe the formatted data. The data is formatted to make organization and graphing more convenient.
+
+## Data Usage
+The following list denotes the data used to create each figure and table in the paper.
+* Table 2: hardware.csv
+* Table 3: hardware.csv
+* Fig 15: hardware.csv
+* Fig 16: gridsize.csv
+* Fig 17: gridsize.csv
+* Fig 18: gridsize.csv
+* Table 4: problem-size.csv
+* Fig 19: problem-size.csv
+* Fig 21: problem-size.csv
+* Fig 22: gene-length.csv
+* Fig 23: gene-length.csv
+
