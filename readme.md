@@ -64,17 +64,17 @@ Formatted data is exported to a directory within the benchmarking repo named `fo
 
 ## Data Usage
 The following list denotes the data used to create each figure and table in the paper.
-* Table 2: hardware.csv
-* Table 3: hardware.csv
-* Fig 15: hardware.csv
-* Fig 16: gridsize.csv
-* Fig 17: gridsize.csv
-* Fig 18: gridsize.csv
-* Table 4: problem-size.csv
-* Fig 19: problem-size.csv
-* Fig 21: problem-size.csv
-* Fig 22: gene-length.csv
-* Fig 23: gene-length.csv
+* Table 2: [hardware.csv](data/hardware.csv)
+* Table 3: [hardware.csv](data/hardware.csv)
+* Fig 15: [hardware.csv](data/hardware.csv)
+* Fig 16: [gridsize.csv](data/gridsize.csv)
+* Fig 17: [gridsize.csv](data/gridsize.csv)
+* Fig 18: [gridsize.csv](data/gridsize.csv)
+* Table 4: [problem-size.csv](data/problem-size.csv)
+* Fig 19: [problem-size.csv](data/problem-size.csv)
+* Fig 21: [problem-size.csv](data/problem-size.csv)
+* Fig 22: [gene-length.csv](data/gene-length.csv)
+* Fig 23: [gene-length.csv](data/gene-length.csv)
 
 ## Aside
 The program [gephi](https://gephi.org/) was used in order to determine runtime of sub-routines within the simulation.
