@@ -44,7 +44,7 @@ Usage: python3 Benchmark.py [option] [cmd]
        gene-length - benchmark only gene length & congestion
        help        - display usage
 ```
-Something to note is that when script's independent variable is "gene-length" (either from passing the option "all" or "gene-length") the previously mentioned metrics are recorded normally as well as **congestion metrics**. The congestion metrics are unique to the independent variable "gene-length". The congestion metrics are the total number of droplets pulled, the maximum number of concurrent droplets, and the maximum value of congestion (**TODO**). Since `top` can't access this information, the simulation does so internally.
+Something to note is that when script's independent variable is "gene-length" (either from passing the option "all" or "gene-length") the previously mentioned metrics are recorded normally as well as **congestion metrics**. The congestion metrics are unique to the independent variable "gene-length". The congestion metrics are the total number of droplets pulled, the maximum number of concurrent droplets, and the maximum value of congestion. Since `top` can't access this information, the simulation does so internally.
 
 #### Parameters
 At the top of [Benchmark.py](Benchmark.py) you can set the benchmarking parameters such as constants, independent variable ranges, and assign target machines. Variables are documented within the file.
