@@ -14,7 +14,4 @@ pkgs.mkShell {
   shellHook = ''
     PYTHONPATH=${python-with-my-packages}/${python-with-my-packages.sitePackages}
   '';
-
-  # skip 15 minutes of numpy/pandas/matplotlib installation tests
-  pythonImportsCheck = [];
 }
