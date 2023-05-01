@@ -21,7 +21,7 @@ g_const_gridsize = 45
 
 """ The hardware (machine) used when hardware is a constant variable.
 I'd recommend using the best machine you can access to speed up runtimes. """
-g_const_machine = 'csel-kh1250-14'
+g_const_machine = 'buffalo'
 
 """ The gene length used when gene length is a constant variable. Should
 be 5 unless Seagate suggests otherwise. """
@@ -29,10 +29,10 @@ g_const_gene_length = 5
 
 """ The grid sizes at which to benchmark against the dependent variables. Make
 sure this includes 1000 unless Seagate suggests otherwise. """
-g_gridsizes = list(range(500, 1600, 100))
+g_gridsizes = list(range(100, 200, 100))
 
 """ The gene lengths at which to benchmark against the dependent variables. """
-g_gene_lengths = list(range(2, 13))
+g_gene_lengths = list(range(2, 9))
 
 """ The interval at which data points are obtained. Every g_ping_interval
 seconds a new data point is pinged. """
@@ -592,6 +592,7 @@ def main(argv):
         format_hardware_data(raw_data_path, formatted_data_path, g_target_metrics)
         format_gridsize_data(raw_data_path, formatted_data_path, g_target_metrics, host_string)
         format_gene_length_data(raw_data_path, formatted_data_path, g_target_metrics, host_string)
+        format_congestion_data(raw_data_path, formatted_data_path, host_string)
     elif option == 'hardware':
         variable_count = 1
         profile_hardware(variable_count, 1, cmd, g_target_metrics, host_string)
