@@ -17,11 +17,11 @@ g_rounds = 1
 
 """ The grid size used when grid size is a constant variable.
 Should be 1000 unless Seagate suggests otherwise. """
-g_const_gridsize = 45
+g_const_gridsize = 69
 
 """ The hardware (machine) used when hardware is a constant variable.
 I'd recommend using the best machine you can access to speed up runtimes. """
-g_const_machine = 'buffalo'
+g_const_machine = 'csel-kh1250-13'
 
 """ The gene length used when gene length is a constant variable. Should
 be 5 unless Seagate suggests otherwise. """
@@ -32,7 +32,7 @@ sure this includes 1000 unless Seagate suggests otherwise. """
 g_gridsizes = list(range(100, 200, 100))
 
 """ The gene lengths at which to benchmark against the dependent variables. """
-g_gene_lengths = list(range(2, 9))
+g_gene_lengths = list(range(7, 31))
 
 """ The interval at which data points are obtained. Every g_ping_interval
 seconds a new data point is pinged. """
