@@ -13,7 +13,7 @@ Source independent DMFsim benchmarking.
 └── toprc               # Provided top configuration file
 ```
 
-Additional directories will be generated upon running the benchmarking script exporting data. This is explained further [later](readme.md#output_data).
+Additional directories will be generated upon running the benchmarking script exporting data. This is explained further [later](readme.md#output data).
 
 ## [The Script](Benchmark.py)
 The script obtains hardware metrics and gene synthesis congestion data while running the simulation. Hardware metrics are obtained using [top](https://man7.org/linux/man-pages/man1/top.1.html). Gene synthesis congestion data are recorded directly by the simulation. After obtaining the data the script exports and formats the data to a spreadsheet readable format (csv).
@@ -77,3 +77,5 @@ The following list denotes the data used to create each figure and table in the 
 * Fig 22: gene-length.csv
 * Fig 23: gene-length.csv
 
+## Aside
+The program [gephi](https://gephi.org/) was used in order to determine runtime of sub-routines within the simulation.
