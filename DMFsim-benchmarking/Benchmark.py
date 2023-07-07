@@ -4,6 +4,7 @@ import subprocess       # running cmds
 import time             # sleeping
 import pandas           # csv exporting/importing
 import numpy            # nan values
+import argparse
 
 
 # ================ PARAMETERS ================ 
@@ -55,22 +56,6 @@ g_targets = {   # see https://man7.org/linux/man-pages/man1/top.1.html for expla
     'data': 10
 }
 g_memory_targets = ['virt', 'res', 'shr', 'swap', 'data']
-
-
-# ================ USAGE ================ 
-def print_usage(opt):
-    if opt:
-        print(f'Error: unknown option \'{opt}\'')
-    usage = (
-    'Usage: python3 Benchmark.py [option] [cmd]\n'
-    '   options:\n'
-    '       all         - benchmark all options\n'
-    '       hardware    - benchmark hardware only\n'
-    '       gridsize    - benchmark gridsize only\n'
-    '       gene-length - benchmark only gene length & congestion\n'
-    '       help        - display usage'
-    )
-    print(usage)
 
 
 # ================ PINGING ================ 
@@ -536,17 +521,26 @@ def format_congestion_data(raw_data_path, formatted_data_path, host_string):
     )
 
 # ================ MAIN ================ 
-def main(argv):
-    # cmd line args error handling
-    try:
-        option = argv[1]
-        assert option == 'help' or len(argv) > 2
-    except:
-        print_usage(None)
-        sys.exit(1)
+def main():
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        'option',
+        choices=['all', 'hardware', 'gridsize', 'gene-length'],
+        type=str,
+        help='benchmark all metrics, hardware, gridsize, or gene-length',
+    )
+    parser.add_argument(
+        'cmd',
+        type=str,
+        help='the command to be benchmarked',
+    )
+    args = parser.parse_args()
+
 
     # the string representing the command to benchmark
-    cmd = ' '.join(argv[2:])
+    cmd = args.cmd
+    option = args.option
 
     # memory type to use as memory metric
     mem_label = g_targets
@@ -580,7 +574,7 @@ def main(argv):
 
     print(f'\nProfiling \'{cmd}\'.\n')
 
-    variable_count = -1
+    variable_count = 0
 
     # option handling
     if option == 'all':
@@ -593,26 +587,21 @@ def main(argv):
         format_gridsize_data(raw_data_path, formatted_data_path, g_target_metrics, host_string)
         format_gene_length_data(raw_data_path, formatted_data_path, g_target_metrics, host_string)
         format_congestion_data(raw_data_path, formatted_data_path, host_string)
-    elif option == 'hardware':
-        variable_count = 1
-        profile_hardware(variable_count, 1, cmd, g_target_metrics, host_string)
-        format_hardware_data(raw_data_path, formatted_data_path, g_target_metrics)
-    elif option == 'gridsize':
-        variable_count = 1
-        profile_gridsize(variable_count, 1, cmd, g_target_metrics, host_string)
-        format_gridsize_data(raw_data_path, formatted_data_path, g_target_metrics, host_string)
-    elif option == 'gene-length':
-        variable_count = 1
-        profile_gene_length(variable_count, 1, cmd, g_target_metrics, host_string)
-        format_gene_length_data(raw_data_path, formatted_data_path, g_target_metrics, host_string)
-        format_congestion_data(raw_data_path, formatted_data_path, host_string)
-    elif option == 'help':
-        print_usage(None)
     else:
-        print_usage(option)
+        variable_count = 1
+        if option == 'hardware':
+          profile_hardware(variable_count, 1, cmd, g_target_metrics, host_string)
+          format_hardware_data(raw_data_path, formatted_data_path, g_target_metrics)
+        if option == 'gridsize':
+          profile_gridsize(variable_count, 1, cmd, g_target_metrics, host_string)
+          format_gridsize_data(raw_data_path, formatted_data_path, g_target_metrics, host_string)
+        if option == 'gene-length':
+          profile_gene_length(variable_count, 1, cmd, g_target_metrics, host_string)
+          format_gene_length_data(raw_data_path, formatted_data_path, g_target_metrics, host_string)
+          format_congestion_data(raw_data_path, formatted_data_path, host_string)
 
     print('\nProfiling done. See \'raw-data\' for raw output. See \'formatted-data\' for formatted output.\n')
 
 
 if __name__ == '__main__':      # entry point
-    main(sys.argv)
+    main()
