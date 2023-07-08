@@ -31,21 +31,33 @@ The program was designed to run on Ubuntu 20.04 however it should work on other 
     python3 Benchmark.py all python3 DMFsim/Tutorial.py
     ```
 
+## Configuration
+
+`config.ini` is the benchmarking program's configuration file. `config.ini` contains three sections. These values determine the bahaviour of the program.
+
+1.  `Benchmarking`: Benchmarking configurations, number of rounds and data collection frequency.
+2.  `Constant Variables`: Values for contants. **Note**: if the constant variable `Machine` does not match the current host machine's name (result of `hostname`) gridsize and gene-length benchmarking will **not** be performed.
+3.  `Independent Variables`: Values for independent variables.
+
 ## Usage
 
-Running `python3 Benchmark.py help` will print the following information.
-
 ```
-Usage: python3 Benchmark.py [option] [cmd]
-   options:
-       all         - benchmark all options
-       hardware    - benchmark hardware only
-       gridsize    - benchmark gridsize only
-       gene-length - benchmark only gene length & congestion
-       help        - display usage
+usage: Benchmark.py [-h] {all,hardware,gridsize,gene-length} cmd
+
+positional arguments:
+  {all,hardware,gridsize,gene-length}
+                        benchmark all metrics, hardware, gridsize, or gene-length
+  cmd                   the command to be benchmarked
+
+optional arguments:
+  -h, --help            show this help message and exit
 ```
 
-Something to note is that when script's independent variable is "gene-length" (either from passing the option "all" or "gene-length") the previously mentioned metrics are recorded normally as well as **congestion metrics**. The congestion metrics are unique to the independent variable "gene-length". The congestion metrics are the total number of droplets pulled, the maximum number of concurrent droplets, and the maximum value of congestion. Since `top` can't access this information, the simulation does so internally.
+-   option:
+    -   `all`: Runs hardware, gridsize, and gene-length benchmarking.
+    -   `hardware`: Runs hardware benchmarking.
+    -   `gridsize`: Runs gridsize benchmarking.
+    -   `gene-length`: Runs gene-length benchmarking.
 
 #### Parameters
 

@@ -5,42 +5,16 @@ import time             # sleeping
 import pandas           # csv exporting/importing
 import numpy            # nan values
 import argparse
+import configparser
+import json
 
 
-# ================ PARAMETERS ================ 
+# ================ CONSTANTS ================ 
+
 """ The target metrics, a list of strings corresponding to top metric headers.
 When benchmarking an independent variable the specified target metrics will be obtained
 per ping from top. "time+": runtime, "res": RAM usage, "%cpu": cpu usage. """
 g_target_metrics = ['time+', 'res', '%cpu']
-
-""" The number of rounds to run the simulation for a given independent variable. """
-g_rounds = 1
-
-""" The grid size used when grid size is a constant variable.
-Should be 1000 unless Seagate suggests otherwise. """
-g_const_gridsize = 69
-
-""" The hardware (machine) used when hardware is a constant variable.
-I'd recommend using the best machine you can access to speed up runtimes. """
-g_const_machine = 'csel-kh1250-13'
-
-""" The gene length used when gene length is a constant variable. Should
-be 5 unless Seagate suggests otherwise. """
-g_const_gene_length = 5
-
-""" The grid sizes at which to benchmark against the dependent variables. Make
-sure this includes 1000 unless Seagate suggests otherwise. """
-g_gridsizes = list(range(100, 200, 100))
-
-""" The gene lengths at which to benchmark against the dependent variables. """
-g_gene_lengths = list(range(7, 31))
-
-""" The interval at which data points are obtained. Every g_ping_interval
-seconds a new data point is pinged. """
-g_ping_interval = 0.07       # in seconds
-
-
-# These should NOT be modified.
 """ possible target metrics, the ordering depends on the user's top configuration
 these indexes will not be accurate if the given toprc is not used! """
 g_targets = {   # see https://man7.org/linux/man-pages/man1/top.1.html for explanation
@@ -56,6 +30,21 @@ g_targets = {   # see https://man7.org/linux/man-pages/man1/top.1.html for expla
     'data': 10
 }
 g_memory_targets = ['virt', 'res', 'shr', 'swap', 'data']
+
+
+# ================ PARAMETERS ================ 
+config = configparser.ConfigParser()
+config.read('./config.ini')
+
+g_rounds = int(config['Benchmarking']['Rounds'])
+g_ping_interval = float(config['Benchmarking']['PingInterval'])
+
+g_const_machine = config['Constant Variables']['Machine']
+g_const_gridsize = int(config['Constant Variables']['Gridsize'])
+g_const_gene_length = int(config['Constant Variables']['GeneLength'])
+
+g_gridsizes = json.loads(config['Independent Variables']['Gridsizes'])
+g_gene_lengths = json.loads(config['Independent Variables']['GeneLengths'])
 
 
 # ================ PINGING ================ 
