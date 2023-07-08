@@ -111,7 +111,7 @@ GeneLengths = [2, 3, 4, 5, 6, 7, 8]
 
 ### Independent Variable: Gridsize
 
-We were interested to see how performance would be affected by the simulation's gridsize. We obtained hardware metrics at varying gridsizes with the following config file and command.
+We were interested to see how performance would be affected by the simulation's gridsize. We obtained hardware metrics at varying gridsizes with the following config file and command. Remember to change the `Machine` to your hostname if you're following along.
 
 ```ini
 # config.ini
@@ -120,7 +120,7 @@ Rounds = 1
 PingInterval = 0.07
 
 [Constant Variables]
-Machine = your-hostname
+Machine = csel-kh1250-13
 Gridsize = 1000
 GeneLength = 5
 
@@ -135,7 +135,7 @@ python3 DMFsim-benchmarking/Benchmark.py gridsize 'python3 DMFsim/Tutorial.py'
 
 ### Independent Variable: Gene-length
 
-We analyzed the performance with respect to the gene length to examine the effects of simulation congestion. We obtained hardware metrics at varying gene lengths with the following command and config file.
+We analyzed the performance with respect to the gene length to examine the effects of simulation congestion. We obtained hardware metrics at varying gene lengths with the following command and config file. Remember to change the `Machine` to your hostname if you're following along.
 
 ```ini
 # config.ini
@@ -144,7 +144,7 @@ Rounds = 1
 PingInterval = 0.07
 
 [Constant Variables]
-Machine = your-hostname
+Machine = csel-kh1250-13
 Gridsize = 45
 GeneLength = 5
 
