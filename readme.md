@@ -19,7 +19,7 @@ $ tree -L 1 .
 
 -   DMFsim: The simulation source code, slightly tweaked to capture congestion data.
 -   DMFsim-benchmarking: The benchmarking source code.
--   Dockerfile: Docker image declaration for compatible environment.
+-   Dockerfile: Docker image declaration to setup the benchmarking environment and install the benchmarking program.
 -   config.ini: The benchmarking program's configuration file.
 -   data: Contains organized data used in the paper.
 -   setup.py: Benchmarker installer.
