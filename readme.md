@@ -46,7 +46,7 @@ The program was designed to run on Ubuntu 20.04 however it should work on other 
 [config.ini](config.ini) is the benchmarking program's configuration file. The configurations determine the behavior of the program. config.ini contains three sections.
 
 1.  `[Benchmarking]`: Benchmarking configurations, number of rounds, and data collection frequency.
-2.  `[Constant Variables]`: Values for contants. **Note**: if the constant variable `Machine` does not match the current host machine's name (the result of `hostname`) gridsize and gene-length benchmarking will **not** be performed.
+2.  `[Constant Variables]`: Values for contants. **Note**: if the constant variable `Machine` does not match the current host machine's name (the result of `hostname`) benchmarking will **not** be performed.
 3.  `[Independent Variables]`: Values for independent variables.
 
 ## Usage
