@@ -542,7 +542,8 @@ def main():
     host_string = subprocess.run('hostname', capture_output=True).stdout.decode().strip()
 
     if host_string != g_const_machine:
-        print("Host machine doesn't match target machine.")
+        print("Host machine doesn't match configured machine! Check that the machine declared in `config.ini` is your hostname!")
+        sys.exit(1)
 
     # create data dirs if necessary
     subprocess.run(
