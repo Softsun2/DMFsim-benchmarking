@@ -56,7 +56,7 @@ usage: Benchmark.py [-h] {all,hardware,gridsize,gene-length} cmd
 
 positional arguments:
   {all,hardware,gridsize,gene-length}
-                        benchmark all independent variables, hardware, gridsize, or gene-length',
+                        benchmark all independent variables, hardware, gridsize, or gene-length
   cmd                   the command to be benchmarked
 
 optional arguments:
