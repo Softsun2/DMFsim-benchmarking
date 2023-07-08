@@ -19,7 +19,7 @@ $ tree -L 1 .
 -   DMFsim: The simulation source code, slightly tweaked to capture congestion data.
 -   DMFsim-benchmarking: The benchmarking source code.
 -   config.ini: The benchmarking program's configuration file.
--   data: Contains organized data used in paper.
+-   data: Contains organized data used in the paper.
 -   setup.py: Benchmarker installer.
 -   toprc: The provided top configuration file.
 
@@ -43,10 +43,10 @@ The program was designed to run on Ubuntu 20.04 however it should work on other 
 
 ## Configuration
 
-[config.ini](config.ini) is the benchmarking program's configuration file. The configurations determine the behaviour of the program. config.ini contains three sections.
+[config.ini](config.ini) is the benchmarking program's configuration file. The configurations determine the behavior of the program. config.ini contains three sections.
 
-1.  `[Benchmarking]`: Benchmarking configurations, number of rounds and data collection frequency.
-2.  `[Constant Variables]`: Values for contants. **Note**: if the constant variable `Machine` does not match the current host machine's name (result of `hostname`) gridsize and gene-length benchmarking will **not** be performed.
+1.  `[Benchmarking]`: Benchmarking configurations, number of rounds, and data collection frequency.
+2.  `[Constant Variables]`: Values for contants. **Note**: if the constant variable `Machine` does not match the current host machine's name (the result of `hostname`) gridsize and gene-length benchmarking will **not** be performed.
 3.  `[Independent Variables]`: Values for independent variables.
 
 ## Usage
@@ -72,11 +72,11 @@ optional arguments:
 
 ## Recreating Data
 
-This program is not deterministic and the machines used are not publicly accessible meaning our exact data is impossible to recreate. However the process used to gather our data is reproducible.
+This program is not deterministic and the machines used are not publicly accessible meaning our exact data is impossible to recreate. However, the process used to gather our data is reproducible.
 
-### Independent Varible: Machine Hardware
+### Independent Variable: Machine Hardware
 
-In our analysis we deemed it was valuable to see how the simulation runs on different hardware. What components affect the simulation the most? We obtained hardware metrics running the simulation on three machines of varying hardware specs.
+In our analysis, we deemed it valuable to see how the simulation runs on different hardware. What components affect the simulation the most? We obtained hardware metrics running the simulation on three machines of varying hardware specs.
 
 To gather this data the following commands were run with the following configuration file.
 
@@ -87,7 +87,7 @@ Rounds = 1
 PingInterval = 0.07
 
 [Constant Variables]
-Machine = 'csel-kh1250-13'
+Machine = csel-kh1250-13
 Gridsize = 1000
 GeneLength = 5
 
@@ -111,7 +111,7 @@ GeneLengths = [2, 3, 4, 5, 6, 7, 8]
 
 ### Independent Variable: Gridsize
 
-We were interested to see how performance would be affected by the simulations gridsize. We obtained hardware metrics at varying gridsizes with the following config file and command.
+We were interested to see how performance would be affected by the simulation's gridsize. We obtained hardware metrics at varying gridsizes with the following config file and command. Remember to change the `Machine` to your hostname if you're following along.
 
 ```ini
 # config.ini
@@ -120,7 +120,7 @@ Rounds = 1
 PingInterval = 0.07
 
 [Constant Variables]
-Machine = 'csel-kh1250-13'
+Machine = csel-kh1250-13
 Gridsize = 1000
 GeneLength = 5
 
@@ -135,7 +135,7 @@ python3 DMFsim-benchmarking/Benchmark.py gridsize 'python3 DMFsim/Tutorial.py'
 
 ### Independent Variable: Gene-length
 
-We analyzed the performance with respect to the gene-length to examine the affects of simulation congestion. We obtained hardware metrics at varying gene-lengths with the following command and config file.
+We analyzed the performance with respect to the gene length to examine the effects of simulation congestion. We obtained hardware metrics at varying gene lengths with the following command and config file. Remember to change the `Machine` to your hostname if you're following along.
 
 ```ini
 # config.ini
@@ -144,7 +144,7 @@ Rounds = 1
 PingInterval = 0.07
 
 [Constant Variables]
-Machine = 'csel-kh1250-13'
+Machine = csel-kh1250-13
 Gridsize = 45
 GeneLength = 5
 
@@ -163,11 +163,11 @@ Data is exported to a directory within the benchmarking repo named `raw-data`.
 
 ### File Prefixes
 
--   `hw`: for "hardware" means that the simulation was ran at the default gridsize, for the independent variable: system hardware.
--   `gs-<gridsize>`: for "gridsize" means that the simulation was ran at the gridsize `<gridsize>`, for the independent variable: gridsize.
--   `gl-<gene-length>`: for "gene length" means that the simulation was ran at the gene length `<gene-length>`, for the independent variable: gene length.
+-   `hw`: for "hardware" means that the simulation was run at the default gridsize, for the independent variable: system hardware.
+-   `gs-<gridsize>`: for "gridsize" means that the simulation was run at the gridsize `<gridsize>`, for the independent variable: gridsize.
+-   `gl-<gene-length>`: for "gene length" means that the simulation was run at the gene length `<gene-length>`, for the independent variable: gene length.
 
-All csv file names are appended with an integer identifying the benchmarking round of the corresponding independent variable. Runtime is measured in seconds, memory is measured in Gib, CPU usage is measured as a proportion, and congestion is the ratio of the total number of droplets pulled from reservoirs to the number of grid points.
+All CSV file names are appended with an integer identifying the benchmarking round of the corresponding independent variable. Runtime is measured in seconds, memory is measured in Gib, CPU usage is measured as a proportion, and congestion is the ratio of the total number of droplets pulled from reservoirs to the number of grid points.
 
 ### Formatted Data
 
@@ -186,7 +186,7 @@ The following list denotes the data used to create each figure and table in the 
 
 The program [gephi](https://gephi.org/) was used in order to determine the runtimes of sub-routines within the simulation.
 
-We were specifically interested in seeing how sub-routine runtimes were affected as the problem-size grew (gridsize increased but congestion remained constant). The following commands were ran:
+We were specifically interested in seeing how sub-routine runtimes were affected as the problem size grew (gridsize increased but congestion remained constant). The following commands were run:
 
 ```
 pycallgraph gephi ./Tutorial.py --gridsize 50 --gene-length 2
@@ -200,4 +200,4 @@ pycallgraph gephi ./Tutorial.py --gridsize 76 --gene-length 4
 pycallgraph gephi ./Tutorial.py --gridsize 96 --gene-length 6
 ```
 
-These commands produce gephi's file format ".gdf" which can be exported to csv as provided [here](data/gephi).
+These commands produce gephi's file format ".gdf" which can be exported to CSV as provided [here](data/gephi).
