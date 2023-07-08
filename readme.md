@@ -96,9 +96,18 @@ Gridsizes = [40, 45, 50]
 GeneLengths = [2, 3, 4, 5, 6, 7, 8]
 ```
 
-1.  On my machine (buffalo) `python3 DMFsim-benchmarking/Benchmark.py hardware 'python3 DMFsim/Tutorial.py'`.
-2.  On the machine csel-kh1250-13 `python3 DMFsim-benchmarking/Benchmark.py hardware 'python3 DMFsim/Tutorial.py'`.
-3.  On the machine csel-kh1262-13 `python3 DMFsim-benchmarking/Benchmark.py hardware 'python3 DMFsim/Tutorial.py'`.
+1.  On my machine (buffalo):
+    ```
+    python3 DMFsim-benchmarking/Benchmark.py hardware 'python3 DMFsim/Tutorial.py'
+    ```
+2.  On the machine csel-kh1250-13:
+    ```
+    python3 DMFsim-benchmarking/Benchmark.py hardware 'python3 DMFsim/Tutorial.py'
+    ```
+3.  On the machine csel-kh1262-13:
+    ```
+    python3 DMFsim-benchmarking/Benchmark.py hardware 'python3 DMFsim/Tutorial.py'
+    ```
 
 ### Independent Variable: Gridsize
 
@@ -120,7 +129,9 @@ Gridsizes = [500, 600, 700, 800, 900, 1000, 1100, 1200, 1300, 1400, 1500]
 GeneLengths = [2, 3, 4, 5, 6, 7, 8]
 ```
 
-`python3 DMFsim-benchmarking/Benchmark.py gridsize 'python3 DMFsim/Tutorial.py'`
+```
+python3 DMFsim-benchmarking/Benchmark.py gridsize 'python3 DMFsim/Tutorial.py'
+```
 
 ### Independent Variable: Gene-length
 
@@ -142,7 +153,9 @@ Gridsizes = [40, 45, 50]
 GeneLengths = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
 ```
 
-`python3 DMFsim-benchmarking/Benchmark.py gene-length 'python3 DMFsim/Tutorial.py'`
+```
+python3 DMFsim-benchmarking/Benchmark.py gene-length 'python3 DMFsim/Tutorial.py'
+```
 
 ## Output Data
 
