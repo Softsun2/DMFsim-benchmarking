@@ -9,6 +9,7 @@ $ tree -L 1 .
 .
 ├── DMFsim
 ├── DMFsim-benchmarking
+├── Dockerfile
 ├── config.ini
 ├── data
 ├── readme.md
@@ -18,6 +19,7 @@ $ tree -L 1 .
 
 -   DMFsim: The simulation source code, slightly tweaked to capture congestion data.
 -   DMFsim-benchmarking: The benchmarking source code.
+-   Dockerfile: Docker image declaration for compatible environment.
 -   config.ini: The benchmarking program's configuration file.
 -   data: Contains organized data used in the paper.
 -   setup.py: Benchmarker installer.
@@ -25,21 +27,62 @@ $ tree -L 1 .
 
 Additional directories will be generated upon running the benchmarking script exporting data. This is explained further [later](readme.md#output-data).
 
-## Installation
+## Environment and Installation
 
-The program was designed to run on Ubuntu 20.04 however it should work on other Linux distributions.
+There are two methods of initializing the environment, manually installing the dependencies or running a docker container.
 
-1.  Obtain the source code (clone or download repo).
-2.  Install the package and its dependencies: `pip install .`.
-3.  Install the provided toprc. Back-up up current toprc if desired.
+### Manual Setup
+
+The manual setup was tested on Ubuntu 20.04 however it should work on other Linux distributions.
+
+Setup the environment by installing the following:
+
+-   python3: `apt-get install python3`. Ensure tkinter is installed. If `python3 -m tkinter` outputs "No module named tkinter" tkinter is not installed, run `apt-get install python3-tk` to install tkinter.
+-   pip: `apt-get install python3-pip`.
+
+Install the program with the following steps:
+
+1.  Obtain the source code (clone or download and extract repo).
+2.  From the command line cd into the repo.
+    ```
+    cd path/to/DMFsim-benchmarking
+    ```
+3.  Install the package and its dependencies.
+    ```
+    pip install .
+    ```
+4.  Install the provided toprc. Back-up up current toprc if desired.
     ```
     test -d ~/.config/procps || mkdir -p ~/.config/procps
     cp ./toprc ~/.config/procps
     ```
-4.  Run the benchmarking script. Refer to [Usage](readme.md#usage) for usage information.
+5.  Run the benchmarking script. Refer to [Usage](readme.md#usage) for usage information.
     ```
     python3 DMFsim-benchmarking/Benchmark.py all 'python3 DMFsim/Tutorial.py'
     ```
+
+### Docker Container
+
+[Docker](https://www.docker.com/) is a virtualization software that delivers software in packages called containers. You do not need an Ubuntu of linux machine for this approach. Docker will virtualize an Ubuntu machine with the benchmarking software pre-installed in a docker container.
+
+1.  [Install docker](https://docs.docker.com/engine/install/).
+2.  From the command line cd into the repo.
+    ```
+    cd path/to/DMFsim-benchmarking
+    ```
+3.  Build the docker image.
+    ```
+    docker build -t dmfsim-benchmarking .
+    ```
+4.  Run the docker container. This will drop you into a bash shell inside the container within the copied DMFsim-benchmarking repo.
+    ```
+    docker run -it dmfsim-benchmarking bash
+    ```
+5.  Run the benchmarking script. Refer to [Usage](readme.md#usage) for usage information.
+    ```
+    python3 DMFsim-benchmarking/Benchmark.py all 'python3 DMFsim/Tutorial.py'
+    ```
+6.  Exit the container by exiting the shell. Docker images and containers can consume your resources, [clean up the image and container](https://www.digitalocean.com/community/tutorials/how-to-remove-docker-images-containers-and-volumes) when you are done if you desire.
 
 ## Configuration
 
@@ -69,6 +112,12 @@ optional arguments:
     -   gridsize: Runs gridsize benchmarking.
     -   gene-length: Runs gene-length benchmarking.
 -   cmd: a command the benchmarker runs while observing machine performance.
+
+For example.
+
+```
+python3 DMFsim-benchmarking/Benchmark.py all 'python3 DMFsim/Tutorial.py'
+```
 
 ## Recreating Data
 
@@ -177,14 +226,16 @@ Formatted data is exported to a directory within the benchmarking repo named `fo
 
 The following list denotes the data used to create each figure and table in the paper.
 
--   [hardware.csv](data/hardware.csv): TODO
--   [gridsize.csv](data/gridsize.csv): TODO
--   [problem-size.csv](data/problem-size.csv): TODO
--   [gene-length.csv](data/gene-length.csv): TODO
+-   [hardware.csv](data/hardware.csv): Table 2, Table 3, Fig. 15.
+-   [gridsize.csv](data/gridsize.csv): Fig. 16, Fig. 17, Fig. 18.
+-   [problem-size.csv](data/problem-size.csv): Table 4, Fig. 19, Fig. 21.
+-   [gene-length.csv](data/gene-length.csv): Fig. 22, Fig. 23.
 
 ## Aside
 
 The program [gephi](https://gephi.org/) was used in order to determine the runtimes of sub-routines within the simulation.
+
+**Get GDFs**
 
 We were specifically interested in seeing how sub-routine runtimes were affected as the problem size grew (gridsize increased but congestion remained constant). The following commands were run:
 
