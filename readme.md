@@ -134,13 +134,13 @@ python3 DMFsim-benchmarking/Benchmark.py all 'python3 DMFsim/Tutorial.py'
 
 **This program is not deterministic and the machines used are not publicly accessible, meaning our exact data is impossible to recreate. However, the process used to gather our data is reproducible.**
 
-We leave our own data 
+We leave our own data in the data folder. 
 
 ### Independent Variable: Machine Hardware
 
 In our analysis, we deemed it valuable to see how the simulation runs on different hardware. What components affect the simulation the most? We obtained hardware metrics running the simulation on three machines of varying hardware specs.
 
-To gather this data the following commands were run with the following configuration file.
+To gather this data, the following commands were run with the following configuration file.
 
 ```ini
 # config.ini
@@ -221,13 +221,14 @@ python3 DMFsim-benchmarking/Benchmark.py gene-length 'python3 DMFsim/Tutorial.py
 
 ## Output Data
 
-Data is exported to a directory within the benchmarking repo named `raw-data`.
+Data is exported to a directory within the benchmarking repo named `raw-data` and then this raw data is formatted and placed in the `formatted-data` folder for easier understanding.
 
 ### File Prefixes
 
 -   `hw`: for "hardware" means that the simulation was run at the default gridsize, for the independent variable: system hardware.
 -   `gs-<gridsize>`: for "gridsize" means that the simulation was run at the gridsize `<gridsize>`, for the independent variable: gridsize.
 -   `gl-<gene-length>`: for "gene length" means that the simulation was run at the gene length `<gene-length>`, for the independent variable: gene length.
+-   `cg-<gene-length>`: for "congestion" means that the simulation was measuring congestion at a specific gene length `<gene-length>`, for the independent variable: gene length.
 
 All CSV file names are appended with an integer identifying the benchmarking round of the corresponding independent variable. Runtime is measured in seconds, memory is measured in Gib, CPU usage is measured as a proportion, and congestion is the ratio of the total number of droplets pulled from reservoirs to the number of grid points.
 
