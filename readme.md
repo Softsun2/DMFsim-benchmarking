@@ -1,8 +1,10 @@
 # DMFsim-benchmarking
 
-Source independent DMFsim benchmarking.
+This is the repository containing the DMFsim code and the DMFsim benchmarking code. This README.md provides a comprehensive introduction
 
 ## File Structure
+
+Please type the following command to view the structure of the repository:
 
 ```
 $ tree -L 1 .
@@ -17,6 +19,8 @@ $ tree -L 1 .
 └── toprc
 ```
 
+Here we explain the purpose of each folder/file:
+
 -   DMFsim: The simulation source code, slightly tweaked to capture congestion data.
 -   DMFsim-benchmarking: The benchmarking source code.
 -   Dockerfile: Docker image declaration to setup the benchmarking environment and install the benchmarking program.
@@ -25,65 +29,71 @@ $ tree -L 1 .
 -   setup.py: Benchmarker installer.
 -   toprc: The provided top configuration file.
 
-Additional directories will be generated upon running the benchmarking script exporting data. This is explained further [later](readme.md#output-data).
+Additional directories will be generated upon running the benchmarking script exporting data. This is explained in the [output data section](readme.md#output-data).
 
 ## Environment and Installation
 
-There are two methods of initializing the environment, manually installing the dependencies or running a docker container. The manual setup was tested on Ubuntu 20.04 however it should work on other Linux distributions. The docker container should work on Windows, MacOS, or Linux.
+There are two installation options: 
+1. Manually installing the dependencies 
+2. Running a docker container. 
+   
+   The manual setup was tested on Ubuntu 20.04 however it should work on other Linux distributions. The docker container should work on Windows, MacOS, or Linux.
 
-### Manual Setup
+### Option 1: Manual Setup and Installation
 
 The manual setup was tested on Ubuntu 20.04 however it should work on other Linux distributions.
 
 #### Environment
 
 1.    python3: `apt-get install python3`.
-        1.    Ensure tkinter is installed. If `python3 -m tkinter` outputs "No module named tkinter" tkinter is not installed, run `apt-get install python3-tk` to install tkinter.
+        1.    Ensure the "tkinter" package is installed. If running `python3 -m tkinter` in ubuntu displays "No module named tkinter", then tkinter is not installed. Please run `apt-get install python3-tk` to install tkinter.
 3.    pip: `apt-get install python3-pip`.
 
+#### Installation
 Install the program with the following steps:
 
 1.  Obtain the source code (clone or download and extract repo).
-2.  From the command line cd into the repo.
+2.  From the command line cd into the top-level repository.
     ```
-    cd path/to/DMFsim-benchmarking
+    cd path/to/DMFsim-benchmarking-data-review
     ```
-3.  Install the package and its dependencies.
+3.  Install the package and its dependencies. This will run setup.py
     ```
     pip install .
     ```
-4.  Install the provided toprc. Back-up up current toprc if desired.
+4.  Install the provided toprc. Save the existing toprc if desired before running the following command.
     ```
     test -d ~/.config/procps || mkdir -p ~/.config/procps
     cp ./toprc ~/.config/procps
     ```
-5.  Run the benchmarking script. Refer to [Usage](readme.md#usage) for usage information.
+5.  Run the benchmarking script. Refer to [Usage](readme.md#usage) for usage information. Ensure that your hostname in 'config.ini' matches your hostname. You can find your hostname by running `hostname` in the Ubuntu terminal. Open config.ini and update the machine name with `hostname` then try running the command below again.
     ```
     python3 DMFsim-benchmarking/Benchmark.py all 'python3 DMFsim/Tutorial.py'
     ```
 
-### Docker Container
+### Option 2: Docker Container 
 
 [Docker](https://www.docker.com/) is a virtualization software that delivers software in packages called containers. Docker is supported on Windows, MacOS, and Linux. Docker will virtualize an Ubuntu machine with the benchmarking software pre-installed in a docker container.
 
 1.  [Install docker](https://docs.docker.com/engine/install/).
-2.  From the command line cd into the repo.
+2.  Make sure you have the docker engine running by opening it on your system.
+3.  From the command line cd into the repo.
     ```
-    cd path/to/DMFsim-benchmarking
+    cd path/to/DMFsim-benchmarking-data-review
     ```
-3.  Build the docker image.
+4.  Build the docker image. This may take a few minutes to complete.
     ```
     docker build -t dmfsim-benchmarking .
     ```
-4.  Run the docker container. This will drop you into a bash shell inside the container within the copied DMFsim-benchmarking repo.
+5.  Run the docker container. This will drop you into a bash shell inside the container within the copied DMFsim-benchmarking repo.
     ```
     docker run -it dmfsim-benchmarking bash
     ```
-5.  Run the benchmarking script. Refer to [Usage](readme.md#usage) for usage information.
+6.  Run the benchmarking script. Refer to [Usage](readme.md#usage) for usage information.
     ```
     python3 DMFsim-benchmarking/Benchmark.py all 'python3 DMFsim/Tutorial.py'
     ```
-6.  Exit the container by exiting the shell. Docker images and containers can consume your resources, [clean up the image and container](https://www.digitalocean.com/community/tutorials/how-to-remove-docker-images-containers-and-volumes) when you are done if you desire.
+7.  Exit the container by exiting the shell. Docker images and containers can consume your resources, [clean up the image and container](https://www.digitalocean.com/community/tutorials/how-to-remove-docker-images-containers-and-volumes) when you are done if you desire.
 
 ## Configuration
 
@@ -122,7 +132,9 @@ python3 DMFsim-benchmarking/Benchmark.py all 'python3 DMFsim/Tutorial.py'
 
 ## Recreating Data
 
-This program is not deterministic and the machines used are not publicly accessible meaning our exact data is impossible to recreate. However, the process used to gather our data is reproducible.
+**This program is not deterministic and the machines used are not publicly accessible, meaning our exact data is impossible to recreate. However, the process used to gather our data is reproducible.**
+
+We leave our own data 
 
 ### Independent Variable: Machine Hardware
 
