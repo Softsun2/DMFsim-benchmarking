@@ -29,16 +29,17 @@ Additional directories will be generated upon running the benchmarking script ex
 
 ## Environment and Installation
 
-There are two methods of initializing the environment, manually installing the dependencies or running a docker container.
+There are two methods of initializing the environment, manually installing the dependencies or running a docker container. The manual setup was tested on Ubuntu 20.04 however it should work on other Linux distributions. The docker container should work on Windows, MacOS, or Linux.
 
 ### Manual Setup
 
 The manual setup was tested on Ubuntu 20.04 however it should work on other Linux distributions.
 
-Setup the environment by installing the following:
+#### Environment
 
--   python3: `apt-get install python3`. Ensure tkinter is installed. If `python3 -m tkinter` outputs "No module named tkinter" tkinter is not installed, run `apt-get install python3-tk` to install tkinter.
--   pip: `apt-get install python3-pip`.
+1.    python3: `apt-get install python3`.
+        1.    Ensure tkinter is installed. If `python3 -m tkinter` outputs "No module named tkinter" tkinter is not installed, run `apt-get install python3-tk` to install tkinter.
+3.    pip: `apt-get install python3-pip`.
 
 Install the program with the following steps:
 
@@ -63,7 +64,7 @@ Install the program with the following steps:
 
 ### Docker Container
 
-[Docker](https://www.docker.com/) is a virtualization software that delivers software in packages called containers. You do not need an Ubuntu of linux machine for this approach. Docker will virtualize an Ubuntu machine with the benchmarking software pre-installed in a docker container.
+[Docker](https://www.docker.com/) is a virtualization software that delivers software in packages called containers. Docker is supported on Windows, MacOS, and Linux. Docker will virtualize an Ubuntu machine with the benchmarking software pre-installed in a docker container.
 
 1.  [Install docker](https://docs.docker.com/engine/install/).
 2.  From the command line cd into the repo.
@@ -89,7 +90,7 @@ Install the program with the following steps:
 [config.ini](config.ini) is the benchmarking program's configuration file. The configurations determine the behavior of the program. config.ini contains three sections.
 
 1.  `[Benchmarking]`: Benchmarking configurations, number of rounds, and data collection frequency.
-2.  `[Constant Variables]`: Values for contants. **Note**: if the constant variable `Machine` does not match the current host machine's name (the result of `hostname`) benchmarking will **not** be performed.
+2.  `[Constant Variables]`: Values for contants. **The constant variable `Machine` must match your hostname**. To obtain your hostname run `hostname`.
 3.  `[Independent Variables]`: Values for independent variables.
 
 ## Usage
