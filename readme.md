@@ -5,15 +5,23 @@ Source independent DMFsim benchmarking.
 ## File Structure
 
 ```
-% tree -L 1 .
+$ tree -L 1 .
 .
-├── Benchmark.py        # The benchmarking script
-├── data                # Organized source data for paper
-├── DMFsim              # Simulation source code
+├── DMFsim
+├── DMFsim-benchmarking
+├── config.ini
+├── data
 ├── readme.md
-├── shell.nix           # Nix dev shell declaration
-└── toprc               # Provided top configuration file
+├── setup.py
+└── toprc
 ```
+
+-   DMFsim: The simulation source code, slightly tweaked to capture congestion data.
+-   DMFsim-benchmarking: The benchmarking source code.
+-   config.ini: The benchmarking program's configuration file.
+-   data: Contains organized data used in paper.
+-   setup.py: Benchmarker installer.
+-   toprc: The provided top configuration file.
 
 Additional directories will be generated upon running the benchmarking script exporting data. This is explained further [later](readme.md#output-data).
 
@@ -24,16 +32,18 @@ The program was designed to run on Ubuntu 20.04 however it should work on other 
 1.  Obtain the source code (clone or download repo).
 2.  Install the package and its dependencies: `pip install .`.
 3.  Install the provided `toprc`. Back-up up current `toprc` if desired.
-    `test -d ~/.config/procps || mkdir -p ~/.config/procps`
-    `cp ./toprc ~/.config/procps`
+    ```
+    test -d ~/.config/procps || mkdir -p ~/.config/procps`
+    cp ./toprc ~/.config/procps
+    ```
 4.  Run the benchmarking script. Refer to [Usage](readme.md#usage) for usage information.
     ```
-    python3 Benchmark.py all python3 DMFsim/Tutorial.py
+    python3 DMFsim-benchmarking/Benchmark.py all 'python3 DMFsim/Tutorial.py'
     ```
 
 ## Configuration
 
-`config.ini` is the benchmarking program's configuration file. `config.ini` contains three sections. These values determine the bahaviour of the program.
+[`config.ini`](config.ini) is the benchmarking program's configuration file. The configurations determine the behaviour of the program. `config.ini` contains three sections.
 
 1.  `Benchmarking`: Benchmarking configurations, number of rounds and data collection frequency.
 2.  `Constant Variables`: Values for contants. **Note**: if the constant variable `Machine` does not match the current host machine's name (result of `hostname`) gridsize and gene-length benchmarking will **not** be performed.
@@ -58,16 +68,87 @@ optional arguments:
     -   `hardware`: Runs hardware benchmarking.
     -   `gridsize`: Runs gridsize benchmarking.
     -   `gene-length`: Runs gene-length benchmarking.
+-   cmd: a command the benchmarker runs while observing machine performance.
 
-#### Parameters
+## Recreating Data
 
-At the top of [Benchmark.py](Benchmark.py) you can set the benchmarking parameters such as constants, independent variable ranges, and assign target machines. Variables are documented within the file.
+This program is not deterministic and the machines used are not publicly accessible meaning our exact data is impossible to recreate. However the process used to gather our data is reproducible.
 
-### Output Data
+### Independent Varible: Machine Hardware
+
+In our analysis we deemed it was valuable to see how the simulation runs on different hardware. What components affect the simulation the most? We obtained hardware metrics running the simulation on three machines of varying hardware specs.
+
+To gather this data the following commands were run with the following configuration file.
+
+```ini
+# config.ini
+[Benchmarking]
+Rounds = 1
+PingInterval = 0.07
+
+[Constant Variables]
+Machine = 'csel-kh1250-13'
+Gridsize = 1000
+GeneLength = 5
+
+[Independent Variables]
+Gridsizes = [40, 45, 50]
+GeneLengths = [2, 3, 4, 5, 6, 7, 8]
+```
+
+1.  On my machine (buffalo) `python3 DMFsim-benchmarking/Benchmark.py hardware 'python3 DMFsim/Tutorial.py'`.
+2.  On the machine csel-kh1250-13 `python3 DMFsim-benchmarking/Benchmark.py hardware 'python3 DMFsim/Tutorial.py'`.
+3.  On the machine csel-kh1262-13
+
+### Independent Variable: Gridsize
+
+We were interested to see how performance would be affected by the simulations gridsize. We obtained hardware metrics at varying gridsizes with the following config file and command.
+
+```ini
+# config.ini
+[Benchmarking]
+Rounds = 1
+PingInterval = 0.07
+
+[Constant Variables]
+Machine = 'csel-kh1250-13'
+Gridsize = 1000
+GeneLength = 5
+
+[Independent Variables]
+Gridsizes = [500, 600, 700, 800, 900, 1000, 1100, 1200, 1300, 1400, 1500]
+GeneLengths = [2, 3, 4, 5, 6, 7, 8]
+```
+
+`python3 DMFsim-benchmarking/Benchmark.py gridsize 'python3 DMFsim/Tutorial.py'`
+
+### Independent Variable: Gene-length
+
+We analyzed the performance with respect to the gene-length to examine the affects of simulation congestion. We obtained hardware metrics at varying gene-lengths with the following command and config file.
+
+```ini
+# config.ini
+[Benchmarking]
+Rounds = 1
+PingInterval = 0.07
+
+[Constant Variables]
+Machine = 'csel-kh1250-13'
+Gridsize = 45
+GeneLength = 5
+
+[Independent Variables]
+Gridsizes = [40, 45, 50]
+GeneLengths = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+```
+
+`python3 DMFsim-benchmarking/Benchmark.py gene-length 'python3 DMFsim/Tutorial.py'`
+
+## Output Data
 
 Data is exported to a directory within the benchmarking repo named `raw-data`.
 
-#### File Prefixes
+### File Prefixes
 
 -   `hw`: for "hardware" means that the simulation was ran at the default gridsize, for the independent variable: system hardware.
 -   `gs-<gridsize>`: for "gridsize" means that the simulation was ran at the gridsize `<gridsize>`, for the independent variable: gridsize.
@@ -75,7 +156,7 @@ Data is exported to a directory within the benchmarking repo named `raw-data`.
 
 All csv file names are appended with an integer identifying the benchmarking round of the corresponding independent variable. Runtime is measured in seconds, memory is measured in Gib, CPU usage is measured as a proportion, and congestion is the ratio of the total number of droplets pulled from reservoirs to the number of grid points.
 
-#### Formatted Data
+### Formatted Data
 
 Formatted data is exported to a directory within the benchmarking repo named `formatted-data`. The directory structure and file names describe the formatted data. The data is formatted to make organization and graphing more convenient.
 

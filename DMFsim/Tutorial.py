@@ -37,41 +37,7 @@ import copy
 import random
 import sys
 import pandas
-import subprocess
-
-
-#########################################################
-#SECTION 0
-#Command line arg parsing
-#########################################################
-
-# Command line arg patch -- Softsun2
-def parse_benchmark_cmdline_args():
-    gridsize = 1000     # default gridsize
-    gene_length = 5     # default gene length 
-    host_string = None
-    b_round = None
-    gui = False
-
-    for arg in sys.argv[1:]:
-        if "--gridsize=" in arg:
-            gridsize_string = arg.split("=")[1]
-            if gridsize_string.isdigit():
-                gridsize = int(gridsize_string)
-        elif "--gene-length=" in arg:
-            gene_length_string = arg.split("=")[1]
-            if gene_length_string.isdigit():
-                gene_length = int(gene_length_string)
-        elif "--host-string=" in arg:
-            host_string = arg.split("=")[1]
-        elif "--round=" in arg:
-            round_string = arg.split("=")[1]
-            if round_string.isdigit():
-                b_round = int(round_string)
-        elif "--gui" in arg:
-            gui = True
-
-    return gridsize, gene_length, host_string, b_round, gui
+import argparse
 
 
 #########################################################
@@ -136,7 +102,19 @@ random.seed(42)
 
 #Set the gene's symbol length (The number of symbols to be assembled into a single gene)
 #and the lab grid width
-width, datalen, host_string, b_round, gui = parse_benchmark_cmdline_args()
+parser = argparse.ArgumentParser()
+parser.add_argument("--gridsize", type=int, default=50, help="the simulation's gridsize")
+parser.add_argument("--gene-length", type=int, default=5, help="the simulation's gene-length")
+parser.add_argument("--host-string", type=str, help="the machine's host name (used for exporting congestion data)")
+parser.add_argument("--round", type=int, help="the benchmarking round (used for exporting congestion data)")
+parser.add_argument("--gui", action='store_true', help="displays the GUI")
+args = parser.parse_args()
+
+width = args.gridsize
+datalen = args.gene_length
+host_string = args.host_string
+b_round = args.round
+gui = args.gui
 
 #Get a list of the interior grid coordinates.
 #This is where the reaction sites *could* be placed.
