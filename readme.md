@@ -233,22 +233,16 @@ The following list denotes the data used to create each figure and table in the 
 
 ## Aside
 
-The program [gephi](https://gephi.org/) was used in order to determine the runtimes of sub-routines within the simulation.
-
-**Get GDFs**
-
-We were specifically interested in seeing how sub-routine runtimes were affected as the problem size grew (gridsize increased but congestion remained constant). The following commands were run:
+The program [gephi](https://gephi.org/) was used in order to determine the runtimes of sub-routines within the simulation. We were specifically interested in seeing how sub-routine runtimes were affected as the problem size grew (gridsize increased but congestion remained constant). Gephi and pycallgraph are required to run following commands, these commands produce gephi's file format ".gdf" which can be exported to CSV. [Our GDF and CSV files](data/gephi).
 
 ```
-pycallgraph gephi ./Tutorial.py --gridsize 50 --gene-length 2
+pycallgraph gephi -- DMFsim/Tutorial.py --gridsize 50 --gene-length 2
 ```
 
 ```
-pycallgraph gephi ./Tutorial.py --gridsize 76 --gene-length 4
+pycallgraph gephi -- DMFsim/Tutorial.py --gridsize 76 --gene-length 4
 ```
 
 ```
-pycallgraph gephi ./Tutorial.py --gridsize 96 --gene-length 6
+pycallgraph gephi -- DMFsim/Tutorial.py --gridsize 96 --gene-length 6
 ```
-
-These commands produce gephi's file format ".gdf" which can be exported to CSV as provided [here](data/gephi).
