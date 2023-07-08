@@ -31,7 +31,7 @@ The program was designed to run on Ubuntu 20.04 however it should work on other 
 
 1.  Obtain the source code (clone or download repo).
 2.  Install the package and its dependencies: `pip install .`.
-3.  Install the provided `toprc`. Back-up up current `toprc` if desired.
+3.  Install the provided toprc. Back-up up current toprc if desired.
     ```
     test -d ~/.config/procps || mkdir -p ~/.config/procps`
     cp ./toprc ~/.config/procps
@@ -43,11 +43,11 @@ The program was designed to run on Ubuntu 20.04 however it should work on other 
 
 ## Configuration
 
-[`config.ini`](config.ini) is the benchmarking program's configuration file. The configurations determine the behaviour of the program. `config.ini` contains three sections.
+[config.ini](config.ini) is the benchmarking program's configuration file. The configurations determine the behaviour of the program. config.ini contains three sections.
 
-1.  `Benchmarking`: Benchmarking configurations, number of rounds and data collection frequency.
-2.  `Constant Variables`: Values for contants. **Note**: if the constant variable `Machine` does not match the current host machine's name (result of `hostname`) gridsize and gene-length benchmarking will **not** be performed.
-3.  `Independent Variables`: Values for independent variables.
+1.  `[Benchmarking]`: Benchmarking configurations, number of rounds and data collection frequency.
+2.  `[Constant Variables]`: Values for contants. **Note**: if the constant variable `Machine` does not match the current host machine's name (result of `hostname`) gridsize and gene-length benchmarking will **not** be performed.
+3.  `[Independent Variables]`: Values for independent variables.
 
 ## Usage
 
@@ -64,10 +64,10 @@ optional arguments:
 ```
 
 -   option:
-    -   `all`: Runs hardware, gridsize, and gene-length benchmarking.
-    -   `hardware`: Runs hardware benchmarking.
-    -   `gridsize`: Runs gridsize benchmarking.
-    -   `gene-length`: Runs gene-length benchmarking.
+    -   all: Runs hardware, gridsize, and gene-length benchmarking.
+    -   hardware: Runs hardware benchmarking.
+    -   gridsize: Runs gridsize benchmarking.
+    -   gene-length: Runs gene-length benchmarking.
 -   cmd: a command the benchmarker runs while observing machine performance.
 
 ## Recreating Data
@@ -98,7 +98,7 @@ GeneLengths = [2, 3, 4, 5, 6, 7, 8]
 
 1.  On my machine (buffalo) `python3 DMFsim-benchmarking/Benchmark.py hardware 'python3 DMFsim/Tutorial.py'`.
 2.  On the machine csel-kh1250-13 `python3 DMFsim-benchmarking/Benchmark.py hardware 'python3 DMFsim/Tutorial.py'`.
-3.  On the machine csel-kh1262-13
+3.  On the machine csel-kh1262-13 `python3 DMFsim-benchmarking/Benchmark.py hardware 'python3 DMFsim/Tutorial.py'`.
 
 ### Independent Variable: Gridsize
 
@@ -164,18 +164,27 @@ Formatted data is exported to a directory within the benchmarking repo named `fo
 
 The following list denotes the data used to create each figure and table in the paper.
 
--   Table 2: [hardware.csv](data/hardware.csv)
--   Table 3: [hardware.csv](data/hardware.csv)
--   Fig 15: [hardware.csv](data/hardware.csv)
--   Fig 16: [gridsize.csv](data/gridsize.csv)
--   Fig 17: [gridsize.csv](data/gridsize.csv)
--   Fig 18: [gridsize.csv](data/gridsize.csv)
--   Table 4: [problem-size.csv](data/problem-size.csv)
--   Fig 19: [problem-size.csv](data/problem-size.csv)
--   Fig 21: [problem-size.csv](data/problem-size.csv)
--   Fig 22: [gene-length.csv](data/gene-length.csv)
--   Fig 23: [gene-length.csv](data/gene-length.csv)
+-   [hardware.csv](data/hardware.csv): TODO
+-   [gridsize.csv](data/gridsize.csv): TODO
+-   [problem-size.csv](data/problem-size.csv): TODO
+-   [gene-length.csv](data/gene-length.csv): TODO
 
 ## Aside
 
 The program [gephi](https://gephi.org/) was used in order to determine the runtimes of sub-routines within the simulation.
+
+We were specifically interested in seeing how sub-routine runtimes were affected as the problem-size grew (gridsize increased but congestion remained constant). The following commands were ran:
+
+```
+pycallgraph gephi ./Tutorial.py --gridsize 50 --gene-length 2
+```
+
+```
+pycallgraph gephi ./Tutorial.py --gridsize 76 --gene-length 4
+```
+
+```
+pycallgraph gephi ./Tutorial.py --gridsize 96 --gene-length 6
+```
+
+These commands produce gephi's file format ".gdf" which can be exported to csv as provided [here](data/gephi).
