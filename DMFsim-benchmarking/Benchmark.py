@@ -517,7 +517,7 @@ def main():
         'option',
         choices=['all', 'hardware', 'gridsize', 'gene-length'],
         type=str,
-        help='benchmark all metrics, hardware, gridsize, or gene-length',
+        help='benchmark all independent variables, hardware, gridsize, or gene-length',
     )
     parser.add_argument(
         'cmd',

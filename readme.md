@@ -33,7 +33,7 @@ The program was designed to run on Ubuntu 20.04 however it should work on other 
 2.  Install the package and its dependencies: `pip install .`.
 3.  Install the provided toprc. Back-up up current toprc if desired.
     ```
-    test -d ~/.config/procps || mkdir -p ~/.config/procps`
+    test -d ~/.config/procps || mkdir -p ~/.config/procps
     cp ./toprc ~/.config/procps
     ```
 4.  Run the benchmarking script. Refer to [Usage](readme.md#usage) for usage information.
@@ -56,7 +56,7 @@ usage: Benchmark.py [-h] {all,hardware,gridsize,gene-length} cmd
 
 positional arguments:
   {all,hardware,gridsize,gene-length}
-                        benchmark all metrics, hardware, gridsize, or gene-length
+                        benchmark all independent variables, hardware, gridsize, or gene-length',
   cmd                   the command to be benchmarked
 
 optional arguments:
