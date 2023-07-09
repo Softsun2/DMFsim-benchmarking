@@ -260,3 +260,10 @@ pycallgraph gephi -- DMFsim/Tutorial.py --gridsize 76 --gene-length 4
 ```
 pycallgraph gephi -- DMFsim/Tutorial.py --gridsize 96 --gene-length 6
 ```
+
+## Additional Information
+
+It is possible to view the GUI of the Tutorial.py separately. After ensuring that the benchmarking command runs to completion, please execute the following command to view the Tutorial.py simulation. The simulation can be terminated at anytime using ctrl+C in the command line.
+```
+python3 tutorial.py --gui
+```
