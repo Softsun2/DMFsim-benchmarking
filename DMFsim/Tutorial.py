@@ -38,6 +38,7 @@ import random
 import sys
 import pandas
 import argparse
+import os
 
 
 #########################################################
@@ -108,6 +109,7 @@ parser.add_argument("--gene-length", type=int, default=5, help="the simulation's
 parser.add_argument("--host-string", type=str, help="the machine's host name (used for exporting congestion data)")
 parser.add_argument("--round", type=int, help="the benchmarking round (used for exporting congestion data)")
 parser.add_argument("--gui", action='store_true', help="displays the GUI")
+parser.add_argument("-v", "--verbose", action='store_true', help="enables verbose mode")
 args = parser.parse_args()
 
 width = args.gridsize
@@ -115,6 +117,7 @@ datalen = args.gene_length
 host_string = args.host_string
 b_round = args.round
 gui = args.gui
+verbose = args.verbose
 
 #Get a list of the interior grid coordinates.
 #This is where the reaction sites *could* be placed.
@@ -196,7 +199,7 @@ root, nodes = Int.Build_Tree(data, gibson_limit, linkernum = len(linkers))
 #All commands that the router generates will be sent to the Lab for execution, and
 #the Lab will generate new results for the Router to use.
 grid_spacing = 1
-lab = Lab(grid_dim, grid_spacing, inst_locs, pull_data, record_congestion=True)
+lab = Lab(grid_dim, grid_spacing, inst_locs, pull_data, record_congestion=True, verbose=verbose)
 
 # This line instantiates the Router, which reads in data concerning both the Lab
 #and the Interpreter's assembly tree.
@@ -206,7 +209,7 @@ sch = Scheduler(nodes, inst_locs, pull_data, lab)
 #The Router moves one time-step at a time, directing droplets towards their destinations
 #and setting new destinations when they arrive.
 #One time-step corresponds to the time it takes a droplet to move one gridspace.
-sch.Compile_Instructions(num=float('inf'), makeplot=gui, wait_time=0.025, version=Int.version)
+sch.Compile_Instructions(makeplot=gui, wait_time=0.025, version=Int.version)
 # sch.Compile_Instructions(makeplot=False, wait_time=0.025, version=Int.version)
 
 #Check if it succeeded in generating the symbols you asked for.
@@ -217,6 +220,10 @@ if Check(lab, data):
         congestion_history = lab.Get_Congestion_History()
 
         gene_length_data_path = f'raw-data/{host_string}/'
+
+        # create data dir if necessary
+        if not os.path.isdir(gene_length_data_path):
+            os.makedirs(gene_length_data_path)
 
         gene_length_data = [
             ('total droplets', 'max droplets', 'max congestion'),
