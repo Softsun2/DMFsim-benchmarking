@@ -9,10 +9,10 @@
     -   I don't have convenient access to WSL to solve this.
         -   [`$DISPLAY` Related](https://stackoverflow.com/questions/48254530/tkinter-in-ubuntu-inside-windows-10-error-no-display-name-and-no-display-env)?
         -   [Driver Related](https://learn.microsoft.com/en-us/windows/wsl/tutorials/gui-apps)?
-        -   If either of these work update the readme.
-    -   Verbosity solved by solution to #2.
+        -   If either of these works update the readme.
+    -   Verbosity solved by the solution to #2.
 2.  [X] Implement verbosity with chess-like terminology...
-    -   I added a verbose flag to `Tutorial.py` which passes it to the Lab. If the flag is present when droplets are moved the move information is printed. I could add print statements for merging and pulling but I'd rather only implement these if it's truly desired.
+    -   I added a verbose flag to `Tutorial.py` which passes it to the Lab. If the flag is present when droplets are moved the move information is printed. I could add print statements for merging and pulling but I'd instead only implement these if it's truly desired.
     -   Verbosity of movement is handled mostly by the following snippets:
     ```python3
     # Lab.py
@@ -35,7 +35,7 @@
         if droplets_moved and not self.to_delete:
             print(f'Droplet {self.species} moved from {[x_0, y_0]} to {[x_1, y_1]}.')
     ```
-3.  [X] Merging visualization bug? Merges into approaching instead of target.
+3.  [X] Merging visualization bug? Merges into approaching instead of the target.
     -   This is intentional. "Estimate the new droplet center as the weighted average of the two droplets' centers".
 4.  [X] Code hangs on gl=3 and gs<32 without obvious reason.
     -   I disabled the timeouts on the simulation so we could benchmark difficult problems. Considering Andrew added timeouts over detecting if the synthesis was possible suggests to me that it would be difficult to know if a synthesis was possible. I added warnings that the synthesis may not be possible when Andrew's original timeout conditions are met.
@@ -57,7 +57,7 @@
                 f'{self.no_progress_limit} time steps! ' \
                 f'This may indicate the synthesis is impossible!')
     ```
-5.  [X] `--host-string` crashes program if file structure is not set up.
+5.  [X] `--host-string` crashes the program if the file structure is not set up.
     -   Added the following snippet to `Tutorial.py`. Generates the data dir if necessary instead of crashing.
     ```python3
     gene_length_data_path = f'raw-data/{host_string}/'
@@ -69,4 +69,4 @@
 
 ## Releasing
 
-When the revisions have been made run through the readme and make sure everything still works. If so make a new release.
+When the revisions have been made run through the readme and ensure everything still works. If so merge data-review into main and make a new release.
