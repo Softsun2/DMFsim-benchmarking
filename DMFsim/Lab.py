@@ -240,15 +240,18 @@ class Lab():
 
         #Finally, delete the droplet object entirely to free up resources
         del dp;
-            
+
     def Status_Update(self):
         print("\nStatus update at time = {}:".format(self.time))
         for dp in self.droplets:
-            print("Droplet {} is in gridpoint {} containing species {}.".format(dp.index, dp.gridpoint.indices, dp.species))
+            gridpts_lst = []
+            for gps in dp.gridpoints:
+                gridpts_lst.append(gps.indices)
+            print("Droplet {} is in gridpoints {} containing species {}.".format(dp.index, gridpts_lst, dp.species))
         for gp in self.grid.values():
             if gp.in_process:
                 print('Gridpoint {} is running process of type {} with remaining runtime {}.'.format(gp.indices,gp.state_inst['inst_type'],gp.runtime))
-                
+
     def Add_Commands(self, comm):
         #The input should be a dict or list of dicts containing some or all of the following keys:
             #inst_indices

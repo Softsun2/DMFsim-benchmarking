@@ -481,7 +481,7 @@ class Scheduler():
 
                 dp.Set_Route(route1 + route2, time = self.time)   
                 
-    def Send_Movement_Commands(self, status_update = False, makeplot = False, saveplot = False, wait_time = 2, ax = None):
+    def Send_Movement_Commands(self, status_update = True, makeplot = False, saveplot = False, wait_time = 2, ax = None):
         #Collects the activation list needed to step forward all the droplets along their routes and sends it to the lab.
         coords = []
         for dp in self.lab.droplets:
