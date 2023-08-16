@@ -267,3 +267,7 @@ It is possible to view the GUI of the Tutorial.py separately. After ensuring tha
 ```
 python3 tutorial.py --gui
 ```
+To see detailed verbose output, please run the following in the command line.
+```
+python3 tutorial.py --gui --verbose
+```
