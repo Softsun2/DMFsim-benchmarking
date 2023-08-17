@@ -5,12 +5,9 @@
     - Zenodo integrates with Github fortunately. Zenodo archives and registers a DOI per repository release.
 
 ## Revisions
-- [ ] 1. Omitting the GUI flag is not verbose enough. `--gui` option doesn't work on WSL.
+- [X] 1. Omitting the GUI flag is not verbose enough. `--gui` option doesn't work on WSL.
     - Verbosity solved by the solution to #2.
-    - I don't have convenient access to WSL to solve this.
-        - [`$DISPLAY` Related](https://stackoverflow.com/questions/48254530/tkinter-in-ubuntu-inside-windows-10-error-no-display-name-and-no-display-env)?
-        - [Driver Related](https://learn.microsoft.com/en-us/windows/wsl/tutorials/gui-apps)?
-        - If either of these works update the readme.
+    - Added instructions for the user to follow in order to avoid the tkinter display issue. 
 - [X] 2. Implement verbosity with chess-like terminology...
     - I added a verbose flag to `Tutorial.py` (see `python3 Tutorial.py -h`) which passes it to the Lab. If the flag is present when droplets are moved the move information is printed. I could add print statements for merging and pulling but I'd instead only implement these if it's truly desired.
     - Verbosity of movement is handled mostly by the following snippets:
