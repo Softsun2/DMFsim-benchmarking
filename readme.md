@@ -271,3 +271,9 @@ To see detailed verbose output, please run the following in the command line.
 ```
 python3 tutorial.py --gui --verbose
 ```
+
+Note: If you are using the "tkinter" GUI library for Python within a WSL, you may run into issues visualizing the code output. To avoid this, add the line: 
+```
+export DISPLAY=:0
+```
+to the WSL's .bashrc file. This should allow the visualization to be seen as desired.
