@@ -592,7 +592,7 @@ class Droplet():
         
         droplets_moved = x_0 != x_1 or y_0 != y_1
         if droplets_moved and not self.to_delete:
-            print(f'Droplet {self.species} moved from {[x_0, y_0]} to {[x_1, y_1]}.')
+            print(f'Droplet {self.index} moved from {[x_0, y_0]} to {[x_1, y_1]}.')
     
     def Find_Gradient(self, compass = True):
         #Overly simplified version of the function that used to calculate movement based on
