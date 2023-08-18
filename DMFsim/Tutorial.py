@@ -109,7 +109,6 @@ parser.add_argument("--gene-length", type=int, default=5, help="the simulation's
 parser.add_argument("--host-string", type=str, help="the machine's host name (used for exporting congestion data)")
 parser.add_argument("--round", type=int, help="the benchmarking round (used for exporting congestion data)")
 parser.add_argument("--gui", action='store_true', help="displays the GUI")
-parser.add_argument("-v", "--verbose", action='store_true', help="enables verbose mode")
 args = parser.parse_args()
 
 width = args.gridsize
@@ -117,7 +116,11 @@ datalen = args.gene_length
 host_string = args.host_string
 b_round = args.round
 gui = args.gui
-verbose = args.verbose
+
+# Check if PCR and Purify sites can be allocated
+if int(width/16 - 1) == 0:
+    print('WARNING! PCR and Purify pull sites cannot be created if the gridsize is less than 32!')
+
 
 #Get a list of the interior grid coordinates.
 #This is where the reaction sites *could* be placed.
@@ -199,7 +202,7 @@ root, nodes = Int.Build_Tree(data, gibson_limit, linkernum = len(linkers))
 #All commands that the router generates will be sent to the Lab for execution, and
 #the Lab will generate new results for the Router to use.
 grid_spacing = 1
-lab = Lab(grid_dim, grid_spacing, inst_locs, pull_data, record_congestion=True, verbose=verbose)
+lab = Lab(grid_dim, grid_spacing, inst_locs, pull_data, record_congestion=True, verbose=True)
 
 # This line instantiates the Router, which reads in data concerning both the Lab
 #and the Interpreter's assembly tree.

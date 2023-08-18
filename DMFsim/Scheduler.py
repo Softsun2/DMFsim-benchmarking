@@ -499,6 +499,8 @@ class Scheduler():
             # shape = Calculate_Shape(radius)
             shape = Calculate_Shape(area = area)
             # options = [x for x in self.pull_data[species[0]]['loc'] if all(not self.Forbidden_Gridpoint(indices=Z, radius=radius)[0] for Z in Get_Blocked(x, shape=shape, shell=[]))]
+            if len(self.pull_data[species[0]]['loc']) == 0:
+                raise AssertionError('{} has no pull sites: {}'.format(species[0], self.pull_data[species[0]]))
             options = [x for x in self.pull_data[species[0]]['loc'] if not self.Forbidden_Gridpoint(indices=x, radius=radius)[0]]
         else:
             raise AssertionError('Trying to pull an invalid species: {}'.format(species))

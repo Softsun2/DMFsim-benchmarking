@@ -55,7 +55,7 @@ Install the program with the following steps:
 1.  Obtain the source code (clone or download and extract repo).
 2.  From the command line cd into the top-level repository.
     ```
-    cd path/to/DMFsim-benchmarking-data-review
+    cd path/to/DMFsim-benchmarking
     ```
 3.  Install the package and its dependencies. This will run setup.py
     ```
@@ -267,7 +267,9 @@ It is possible to view the GUI of the Tutorial.py separately. After ensuring tha
 ```
 python3 tutorial.py --gui
 ```
-To see detailed verbose output, please run the following in the command line.
+
+Note: If you are using the "tkinter" GUI library for Python within a WSL, you may run into issues visualizing the code output. To avoid this, add the line: 
 ```
-python3 tutorial.py --gui --verbose
+export DISPLAY=:0
 ```
+to the WSL's .bashrc file. This should allow the visualization to be seen as desired.
