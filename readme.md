@@ -267,7 +267,6 @@ It is possible to view the GUI of the Tutorial.py separately. After ensuring tha
 ```
 python3 tutorial.py --gui
 ```
-
 Note: If you are using the "tkinter" GUI library for Python within a WSL, you may run into issues visualizing the code output. To avoid this, add the line: 
 ```
 export DISPLAY=:0
