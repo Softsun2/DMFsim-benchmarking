@@ -1,5 +1,7 @@
 # DMFsim-benchmarking
 
+[![DOI](https://zenodo.org/badge/517434821.svg)](https://zenodo.org/badge/latestdoi/517434821)
+
 This is the repository containing the DMFsim code and the DMFsim benchmarking code. This README.md provides a comprehensive introduction
 
 ## File Structure
