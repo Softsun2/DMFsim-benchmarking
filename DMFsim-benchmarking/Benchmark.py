@@ -4,42 +4,17 @@ import subprocess       # running cmds
 import time             # sleeping
 import pandas           # csv exporting/importing
 import numpy            # nan values
+import argparse
+import configparser
+import json
 
 
-# ================ PARAMETERS ================ 
+# ================ CONSTANTS ================ 
+
 """ The target metrics, a list of strings corresponding to top metric headers.
 When benchmarking an independent variable the specified target metrics will be obtained
 per ping from top. "time+": runtime, "res": RAM usage, "%cpu": cpu usage. """
 g_target_metrics = ['time+', 'res', '%cpu']
-
-""" The number of rounds to run the simulation for a given independent variable. """
-g_rounds = 1
-
-""" The grid size used when grid size is a constant variable.
-Should be 1000 unless Seagate suggests otherwise. """
-g_const_gridsize = 69
-
-""" The hardware (machine) used when hardware is a constant variable.
-I'd recommend using the best machine you can access to speed up runtimes. """
-g_const_machine = 'csel-kh1250-13'
-
-""" The gene length used when gene length is a constant variable. Should
-be 5 unless Seagate suggests otherwise. """
-g_const_gene_length = 5
-
-""" The grid sizes at which to benchmark against the dependent variables. Make
-sure this includes 1000 unless Seagate suggests otherwise. """
-g_gridsizes = list(range(100, 200, 100))
-
-""" The gene lengths at which to benchmark against the dependent variables. """
-g_gene_lengths = list(range(7, 31))
-
-""" The interval at which data points are obtained. Every g_ping_interval
-seconds a new data point is pinged. """
-g_ping_interval = 0.07       # in seconds
-
-
-# These should NOT be modified.
 """ possible target metrics, the ordering depends on the user's top configuration
 these indexes will not be accurate if the given toprc is not used! """
 g_targets = {   # see https://man7.org/linux/man-pages/man1/top.1.html for explanation
@@ -57,20 +32,19 @@ g_targets = {   # see https://man7.org/linux/man-pages/man1/top.1.html for expla
 g_memory_targets = ['virt', 'res', 'shr', 'swap', 'data']
 
 
-# ================ USAGE ================ 
-def print_usage(opt):
-    if opt:
-        print(f'Error: unknown option \'{opt}\'')
-    usage = (
-    'Usage: python3 Benchmark.py [option] [cmd]\n'
-    '   options:\n'
-    '       all         - benchmark all options\n'
-    '       hardware    - benchmark hardware only\n'
-    '       gridsize    - benchmark gridsize only\n'
-    '       gene-length - benchmark only gene length & congestion\n'
-    '       help        - display usage'
-    )
-    print(usage)
+# ================ PARAMETERS ================ 
+config = configparser.ConfigParser()
+config.read('./config.ini')
+
+g_rounds = int(config['Benchmarking']['Rounds'])
+g_ping_interval = float(config['Benchmarking']['PingInterval'])
+
+g_const_machine = config['Constant Variables']['Machine']
+g_const_gridsize = int(config['Constant Variables']['Gridsize'])
+g_const_gene_length = int(config['Constant Variables']['GeneLength'])
+
+g_gridsizes = json.loads(config['Independent Variables']['Gridsizes'])
+g_gene_lengths = json.loads(config['Independent Variables']['GeneLengths'])
 
 
 # ================ PINGING ================ 
@@ -536,17 +510,26 @@ def format_congestion_data(raw_data_path, formatted_data_path, host_string):
     )
 
 # ================ MAIN ================ 
-def main(argv):
-    # cmd line args error handling
-    try:
-        option = argv[1]
-        assert option == 'help' or len(argv) > 2
-    except:
-        print_usage(None)
-        sys.exit(1)
+def main():
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        'option',
+        choices=['all', 'hardware', 'gridsize', 'gene-length'],
+        type=str,
+        help='benchmark all independent variables, hardware, gridsize, or gene-length',
+    )
+    parser.add_argument(
+        'cmd',
+        type=str,
+        help='the command to be benchmarked',
+    )
+    args = parser.parse_args()
+
 
     # the string representing the command to benchmark
-    cmd = ' '.join(argv[2:])
+    cmd = args.cmd
+    option = args.option
 
     # memory type to use as memory metric
     mem_label = g_targets
@@ -559,7 +542,8 @@ def main(argv):
     host_string = subprocess.run('hostname', capture_output=True).stdout.decode().strip()
 
     if host_string != g_const_machine:
-        print("Host machine doesn't match target machine.")
+        print("Host machine doesn't match configured machine! Check that the machine declared in `config.ini` is your hostname! Also make sure there are no quotes around the hostname in the config.ini file! ")
+        sys.exit(1)
 
     # create data dirs if necessary
     subprocess.run(
@@ -580,7 +564,7 @@ def main(argv):
 
     print(f'\nProfiling \'{cmd}\'.\n')
 
-    variable_count = -1
+    variable_count = 0
 
     # option handling
     if option == 'all':
@@ -593,26 +577,21 @@ def main(argv):
         format_gridsize_data(raw_data_path, formatted_data_path, g_target_metrics, host_string)
         format_gene_length_data(raw_data_path, formatted_data_path, g_target_metrics, host_string)
         format_congestion_data(raw_data_path, formatted_data_path, host_string)
-    elif option == 'hardware':
-        variable_count = 1
-        profile_hardware(variable_count, 1, cmd, g_target_metrics, host_string)
-        format_hardware_data(raw_data_path, formatted_data_path, g_target_metrics)
-    elif option == 'gridsize':
-        variable_count = 1
-        profile_gridsize(variable_count, 1, cmd, g_target_metrics, host_string)
-        format_gridsize_data(raw_data_path, formatted_data_path, g_target_metrics, host_string)
-    elif option == 'gene-length':
-        variable_count = 1
-        profile_gene_length(variable_count, 1, cmd, g_target_metrics, host_string)
-        format_gene_length_data(raw_data_path, formatted_data_path, g_target_metrics, host_string)
-        format_congestion_data(raw_data_path, formatted_data_path, host_string)
-    elif option == 'help':
-        print_usage(None)
     else:
-        print_usage(option)
+        variable_count = 1
+        if option == 'hardware':
+          profile_hardware(variable_count, 1, cmd, g_target_metrics, host_string)
+          format_hardware_data(raw_data_path, formatted_data_path, g_target_metrics)
+        if option == 'gridsize':
+          profile_gridsize(variable_count, 1, cmd, g_target_metrics, host_string)
+          format_gridsize_data(raw_data_path, formatted_data_path, g_target_metrics, host_string)
+        if option == 'gene-length':
+          profile_gene_length(variable_count, 1, cmd, g_target_metrics, host_string)
+          format_gene_length_data(raw_data_path, formatted_data_path, g_target_metrics, host_string)
+          format_congestion_data(raw_data_path, formatted_data_path, host_string)
 
     print('\nProfiling done. See \'raw-data\' for raw output. See \'formatted-data\' for formatted output.\n')
 
 
 if __name__ == '__main__':      # entry point
-    main(sys.argv)
+    main()

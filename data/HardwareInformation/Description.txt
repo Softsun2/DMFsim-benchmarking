@@ -1,9 +1,9 @@
-This folder contains information regarding hardware that is not included in the manuscript. This is left in the supporting information if the user is interested. The results are out of scope of the paper; therefore, they are placed here. 
+This folder contains information regarding hardware that is not included in the manuscript. This is left in the supporting information if the user is interested. The results are out of the scope of the paper; therefore, they are placed here. However, we believe a reader may be interested in the information which we provide here. 
 
 This folder contains data regarding the RAM and CPU usage information when running the same problem across three different machines with different RAM and CPU capabilities. 
 A gridsize of 1000 x 1000 was chosen for all 3 machines using the same problem. 
 
-CPU Specifications: Machine 1 and 2 have 8-thread CPUs and Machine 3 has a 16-thread CPU. Running the problem consumed the entirety of a single thread, such that Machines 1 and 2 had about 12.5% total CPU usage and Machine 3 had about 6.25% total CPU usage. 
+CPU Specifications: Machines 1 and 2 have 8-thread CPUs and Machine 3 has a 16-thread CPU. Running the problem consumed the entirety of a single thread, such that Machines 1 and 2 had about 12.5% total CPU usage and Machine 3 had about 6.25% total CPU usage. 
 
 RAM Specifications: Machine 1 was equipped with 16GiB of total RAM while Machines 2 and 3 were equipped with 32GiB of total RAM. The PEAK RAM Used was never close to exceeding the total availability of RAM, which suggests the RAM availability was not a limiting factor for this problem. However, this may change as we increase gridsize. 
 

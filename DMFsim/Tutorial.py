@@ -37,41 +37,8 @@ import copy
 import random
 import sys
 import pandas
-import subprocess
-
-
-#########################################################
-#SECTION 0
-#Command line arg parsing
-#########################################################
-
-# Command line arg patch -- Softsun2
-def parse_benchmark_cmdline_args():
-    gridsize = 1000     # default gridsize
-    gene_length = 5     # default gene length 
-    host_string = None
-    b_round = None
-    gui = False
-
-    for arg in sys.argv[1:]:
-        if "--gridsize=" in arg:
-            gridsize_string = arg.split("=")[1]
-            if gridsize_string.isdigit():
-                gridsize = int(gridsize_string)
-        elif "--gene-length=" in arg:
-            gene_length_string = arg.split("=")[1]
-            if gene_length_string.isdigit():
-                gene_length = int(gene_length_string)
-        elif "--host-string=" in arg:
-            host_string = arg.split("=")[1]
-        elif "--round=" in arg:
-            round_string = arg.split("=")[1]
-            if round_string.isdigit():
-                b_round = int(round_string)
-        elif "--gui" in arg:
-            gui = True
-
-    return gridsize, gene_length, host_string, b_round, gui
+import argparse
+import os
 
 
 #########################################################
@@ -136,7 +103,24 @@ random.seed(42)
 
 #Set the gene's symbol length (The number of symbols to be assembled into a single gene)
 #and the lab grid width
-width, datalen, host_string, b_round, gui = parse_benchmark_cmdline_args()
+parser = argparse.ArgumentParser()
+parser.add_argument("--gridsize", type=int, default=50, help="the simulation's gridsize")
+parser.add_argument("--gene-length", type=int, default=5, help="the simulation's gene-length")
+parser.add_argument("--host-string", type=str, help="the machine's host name (used for exporting congestion data)")
+parser.add_argument("--round", type=int, help="the benchmarking round (used for exporting congestion data)")
+parser.add_argument("--gui", action='store_true', help="displays the GUI")
+args = parser.parse_args()
+
+width = args.gridsize
+datalen = args.gene_length
+host_string = args.host_string
+b_round = args.round
+gui = args.gui
+
+# Check if PCR and Purify sites can be allocated
+if int(width/16 - 1) == 0:
+    print('WARNING! PCR and Purify pull sites cannot be created if the gridsize is less than 32!')
+
 
 #Get a list of the interior grid coordinates.
 #This is where the reaction sites *could* be placed.
@@ -218,7 +202,7 @@ root, nodes = Int.Build_Tree(data, gibson_limit, linkernum = len(linkers))
 #All commands that the router generates will be sent to the Lab for execution, and
 #the Lab will generate new results for the Router to use.
 grid_spacing = 1
-lab = Lab(grid_dim, grid_spacing, inst_locs, pull_data, record_congestion=True)
+lab = Lab(grid_dim, grid_spacing, inst_locs, pull_data, record_congestion=True, verbose=True)
 
 # This line instantiates the Router, which reads in data concerning both the Lab
 #and the Interpreter's assembly tree.
@@ -228,7 +212,7 @@ sch = Scheduler(nodes, inst_locs, pull_data, lab)
 #The Router moves one time-step at a time, directing droplets towards their destinations
 #and setting new destinations when they arrive.
 #One time-step corresponds to the time it takes a droplet to move one gridspace.
-sch.Compile_Instructions(num=float('inf'), makeplot=gui, wait_time=0.025, version=Int.version)
+sch.Compile_Instructions(makeplot=gui, wait_time=0.025, version=Int.version)
 # sch.Compile_Instructions(makeplot=False, wait_time=0.025, version=Int.version)
 
 #Check if it succeeded in generating the symbols you asked for.
@@ -239,6 +223,10 @@ if Check(lab, data):
         congestion_history = lab.Get_Congestion_History()
 
         gene_length_data_path = f'raw-data/{host_string}/'
+
+        # create data dir if necessary
+        if not os.path.isdir(gene_length_data_path):
+            os.makedirs(gene_length_data_path)
 
         gene_length_data = [
             ('total droplets', 'max droplets', 'max congestion'),

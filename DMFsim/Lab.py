@@ -29,7 +29,7 @@ class Lab():
     #It curates a set of Droplet and Gridpoint objects, determining how the
     #Droplets move and change, and allowing external code to control the Gridpoints.
     #Has methods for looping through all droplets and updating their locations/contents, updating gridpoint commands, etc.
-    def __init__(self, grid_dim, grid_spacing, inst_capable_locations, pull_data, record_congestion = False, alpha = 1/3, beta = 2):
+    def __init__(self, grid_dim, grid_spacing, inst_capable_locations, pull_data, record_congestion = False, alpha = 1/3, beta = 2, verbose=False):
         #Note that the input inst_capable_locations should be a list of lists,
         #and each sublist should contain first a string identifying the instruction type,
         #and then a group of tuples identifying the gridpoint indices that can execute that instruction.
@@ -50,6 +50,7 @@ class Lab():
         self.congestion_tracker = []
         self.alpha = alpha
         self.beta = beta
+        self.verbose = verbose
 
         #Initialize the Gridpoint array
         rows, cols = grid_dim
@@ -89,7 +90,7 @@ class Lab():
         if index_list is not None:
             for i in range(len(index_list)):
                 self.grid[index_list[i]].Update_Inst(inst_list[i])
-         
+
     def Advance(self, inst_indices=None, insts=None, pot_indices=None, pots=None, pull_indices=None, keys=None, nodes=None):
         #Reset all of the gridpoint potentials to 0
         for gp in self.grid.values():
@@ -107,14 +108,17 @@ class Lab():
         self.Pull_Droplets(pull_indices, keys, nodes)
         
         #Move Droplets according to electrostatic control points.
-            #Check that no droplets are outside the bounds of the grid.
-            #Update droplet 'container' Gridpoints.
-            #Update Gridpoint residues
+        #Check that no droplets are outside the bounds of the grid.
+        #Update droplet 'container' Gridpoints.
+        #Update Gridpoint residues
         for droplet in self.droplets:
-            droplet.Move(self.grid, self.time)
+            if self.verbose:
+                droplet.Verbose_Move(self.grid, self.time)
+            else:
+                droplet.Move(self.grid, self.time)
             
         #Advance Gridpoint instructions by one step.
-            #Convert droplets according to mixing and heating controls, etc.
+        #Convert droplets according to mixing and heating controls, etc.
         for gridpoint in self.grid.values():
             try:
                 gridpoint.Advance()
@@ -141,12 +145,10 @@ class Lab():
         #For now, congestion is sum of area occupied by droplets divided by total area
         # sum([x.area for x in self.droplets])/(self.grid_dim[0]*self.grid_dim[1])
 
-        # TODO(SS2): Derive a sensible congestion calculation
         """
         congestion is the sum of the unique gridpoints being used for routing,
         the gridpoints containing droplets, and the occluded gridpoints, divided
         by the total number of gridpoints
-
         """
         coords = []
         for i, droplet in enumerate(self.droplets):
@@ -238,15 +240,18 @@ class Lab():
 
         #Finally, delete the droplet object entirely to free up resources
         del dp;
-            
+
     def Status_Update(self):
         print("\nStatus update at time = {}:".format(self.time))
         for dp in self.droplets:
-            print("Droplet {} is in gridpoint {} containing species {}.".format(dp.index, dp.gridpoint.indices, dp.species))
+            gridpts_lst = []
+            for gps in dp.gridpoints:
+                gridpts_lst.append(gps.indices)
+            print("Droplet {} is in gridpoints {} containing species {}.".format(dp.index, gridpts_lst, dp.species))
         for gp in self.grid.values():
             if gp.in_process:
                 print('Gridpoint {} is running process of type {} with remaining runtime {}.'.format(gp.indices,gp.state_inst['inst_type'],gp.runtime))
-                
+
     def Add_Commands(self, comm):
         #The input should be a dict or list of dicts containing some or all of the following keys:
             #inst_indices
@@ -580,6 +585,14 @@ class Droplet():
         #Find out what gridpoints the droplet now occupies and record them  
         self.Update_Gridpoints(grid, time = time)        
 
+    def Verbose_Move(self, grid, time = None):     
+        x_0, y_0 = self.coords
+        self.Move(grid, time)
+        x_1, y_1 = self.coords
+        
+        droplets_moved = x_0 != x_1 or y_0 != y_1
+        if droplets_moved and not self.to_delete:
+            print(f'Droplet {self.index} moved from {[x_0, y_0]} to {[x_1, y_1]}.')
     
     def Find_Gradient(self, compass = True):
         #Overly simplified version of the function that used to calculate movement based on

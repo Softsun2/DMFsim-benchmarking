@@ -21,6 +21,7 @@ from Lab import Calculate_Shape, Calculate_Shell
 import time
 import copy
 from functools import reduce
+import warnings
 
 class Scheduler():
     #Takes in grid data and a set of instruction nodes.
@@ -34,6 +35,7 @@ class Scheduler():
         self.current_nodes = []
         self.perm_forbidden = perm_forbidden
         self.time = -1
+        self.time_limit = 600
         self.verbose = verbose
         self.astar_calls = 0
         self.move_calls = 0
@@ -42,6 +44,7 @@ class Scheduler():
         self.failed_routes = 0
         self.most_visits = 0
         self.no_progress_tracker = 0 #Tracks how long it has been since progress was made.
+        self.no_progress_limit = 500 
         
         #for debugging
         self.debug = None
@@ -72,9 +75,33 @@ class Scheduler():
         elif version == 2:           #For the new version
             self.current_nodes = [node for sublist in self.nodes for node in sublist if node.Is_Leaf()] 
 
-        #Loop until the root node has concluded or until the num limit is reached
-        while (time.time() - start_time < float('inf')) and (self.no_progress_tracker < float('inf')) and (self.time < num) and (not self.nodes[-1][-1].Concluded()):
+        # Warning trackers
+        warned_runtime_time = False
+        warned_runtime_steps = False
+        warned_no_progress = False
+
+        # Andrew's original timeout conditions
         # while (time.time() - start_time < 600) and (self.no_progress_tracker < 500) and (self.time < num) and (not self.nodes[-1][-1].Concluded()):
+
+        #Loop until the root node has concluded or until the num limit is reached
+        while not self.nodes[-1][-1].Concluded():
+
+            # Warn for timeouts
+            # Warnings will only be displayed once
+            if not warned_runtime_time and time.time() - start_time > self.time_limit:
+                warned_runtime_time = True
+                print(f'RUNTIMEWARNING! The runtime has exceeded {self.time_limit}! ' \
+                        f'This may indicate the synthesis is impossible!')
+            if not warned_runtime_steps and self.time > num:
+                warned_runtime_steps = True
+                print(f'RUNTIMEWARNING! The runtime has exceeded {num} time steps! ' \
+                        f'This may indicate the synthesis is impossible!')
+            if not warned_no_progress and self.no_progress_tracker > self.no_progress_limit:
+                warned_no_progress = True
+                print(f'RUNTIMEWARNING! No progress has been made in over ' \
+                        f'{self.no_progress_limit} time steps! ' \
+                        f'This may indicate the synthesis is impossible!')
+
             #Update the time tracker
             self.time += 1
             self.no_progress_tracker += 1
@@ -126,13 +153,6 @@ class Scheduler():
                     #The parent inherits the childrens' selected sites (i.e. shunting sites)
                     c.Clear(grid=self.lab.grid, time=self.time, parent = n)
                     self.current_nodes.remove(c)            
-        
-        # while (time.time() - start_time < 600) and (self.no_progress_tracker < 500) and (self.time < num) and (not self.nodes[-1][-1].Concluded()):
-        print('\nReason for exiting:')
-        print('(time.time() - start_time < 600):', not (time.time() - start_time < 600))
-        print('(self.no_progress_tracker < 500):', not (self.no_progress_tracker < 500))
-        print('(self.time < num):', not (self.time < num))
-        print('(not self.nodes[-1][-1].Concluded()):', not (not self.nodes[-1][-1].Concluded()))
 
     def Check_Node_Progress(self, node):
         #Checks on the node's progress in its current instruction.
@@ -461,7 +481,7 @@ class Scheduler():
 
                 dp.Set_Route(route1 + route2, time = self.time)   
                 
-    def Send_Movement_Commands(self, status_update = False, makeplot = False, saveplot = False, wait_time = 2, ax = None):
+    def Send_Movement_Commands(self, status_update = True, makeplot = False, saveplot = False, wait_time = 2, ax = None):
         #Collects the activation list needed to step forward all the droplets along their routes and sends it to the lab.
         coords = []
         for dp in self.lab.droplets:
@@ -479,6 +499,8 @@ class Scheduler():
             # shape = Calculate_Shape(radius)
             shape = Calculate_Shape(area = area)
             # options = [x for x in self.pull_data[species[0]]['loc'] if all(not self.Forbidden_Gridpoint(indices=Z, radius=radius)[0] for Z in Get_Blocked(x, shape=shape, shell=[]))]
+            if len(self.pull_data[species[0]]['loc']) == 0:
+                raise AssertionError('{} has no pull sites: {}'.format(species[0], self.pull_data[species[0]]))
             options = [x for x in self.pull_data[species[0]]['loc'] if not self.Forbidden_Gridpoint(indices=x, radius=radius)[0]]
         else:
             raise AssertionError('Trying to pull an invalid species: {}'.format(species))
