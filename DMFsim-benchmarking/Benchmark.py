@@ -376,7 +376,7 @@ def format_hardware_data(raw_data_path, formatted_data_path, target_metrics):
             data, path
         )
     if any(metric in g_memory_targets for metric in target_metrics):
-        mem_label = next(metric for metric in target_metrics if metric in g_targets)
+        mem_label = next(metric for metric in target_metrics if metric in g_memory_targets)
         format_mem_data(
             'hardware-v-mem', 
             [
