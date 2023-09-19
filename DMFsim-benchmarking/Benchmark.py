@@ -176,7 +176,7 @@ def profile_hardware(variable_count, ith_variable, cmd, target_metrics, host_str
                 target_metrics,
                 f'raw-data/{host_string}/hw-{i}.csv'
             )
-            sys.exit(0)                                 # kill child (⌣́_⌣̀)
+            sys.exit(0)                                 # kill child
 
         else:                                           # parent process
             # run simulation
@@ -209,7 +209,7 @@ def profile_gridsize(variable_count, ith_variable, cmd, target_metrics, host_str
                         target_metrics,
                         f'raw-data/{host_string}/gs-{gridsize}-{j}.csv'
                     )
-                    sys.exit(0)                                 # kill child (⌣́_⌣̀)
+                    sys.exit(0)                                 # kill child
 
                 else:                                           # parent process
                     # run simulation
@@ -244,7 +244,7 @@ def profile_gene_length(variable_count, ith_variable, cmd, target_metrics, host_
                         target_metrics,
                         f'raw-data/{host_string}/gl-{gene_length}-{j}.csv'
                     )
-                    sys.exit(0)                                 # kill child (⌣́_⌣̀)
+                    sys.exit(0)                                 # kill child
 
                 else:                                           # parent process
                     # run simulation
@@ -454,7 +454,7 @@ def format_gene_length_data(raw_data_path, formatted_data_path, target_metrics, 
             data, path
         )
     if any(metric in g_memory_targets for metric in target_metrics):
-        mem_label = next(metric for metric in target_metrics if metric in target_metrics)
+        mem_label = next(metric for metric in target_metrics if metric in g_memory_targets)
         format_mem_data(
             'gene-length-v-mem', 
             [
